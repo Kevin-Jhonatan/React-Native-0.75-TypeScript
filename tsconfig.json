@@ -5,7 +5,8 @@
     "paths": {
       "*": ["src/*"],
       "tests": ["tests/*"],
-      "@components/*": ["src/components/*"]
+      "@components/*": ["src/components/*"],
+      "typeRoots": ["./node_modules/@types", "./types"]
     }
   }
 }
