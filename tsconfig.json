@@ -6,7 +6,7 @@
       "*": ["src/*"],
       "tests": ["tests/*"],
       "@components/*": ["src/components/*"],
-      "typeRoots": ["./node_modules/@types", "./types"]
+      "typeRoots": ["./node_modules/@types", "./"]
     }
   }
 }
