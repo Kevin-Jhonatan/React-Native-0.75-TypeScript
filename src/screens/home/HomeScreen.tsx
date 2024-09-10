@@ -25,12 +25,12 @@ export const HomeScreen = ({navigation}: any) => {
             barStyle="light-content"
           />
 
-          <Car width={400} height={400} style={tw`mt-10`} />
+          <Car width={400} height={400} />
 
-          <Text style={tw`text-white text-3xl font-bold uppercase`}>
+          <Text style={tw`text-white text-2xl font-bold uppercase`}>
             Bienvenidos
           </Text>
-          <Text style={tw`text-white text-3xl font-bold mt-5 uppercase`}>
+          <Text style={tw`text-white text-2xl font-bold mt-5 uppercase`}>
             Línea 210
           </Text>
 
@@ -44,9 +44,7 @@ export const HomeScreen = ({navigation}: any) => {
                   borderRadius: 30,
                 },
               ]}>
-              <Text style={tw`text-white text-lg uppercase font-bold`}>
-                Pasajero
-              </Text>
+              <Text style={tw`text-white text-lg uppercase`}>Pasajero</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -54,11 +52,13 @@ export const HomeScreen = ({navigation}: any) => {
               style={[
                 tw`w-80 h-16 justify-center items-center mb-5`,
                 {
-                  backgroundColor: '#FFC02D',
+                  borderWidth: 3,
+                  borderColor: '#FFC02D',
+                  backgroundColor: 'transparent',
                   borderRadius: 30,
                 },
               ]}>
-              <Text style={tw`text-black-400 text-lg uppercase font-bold`}>
+              <Text style={tw`text-yellow-400 text-lg uppercase`}>
                 Conductor
               </Text>
             </TouchableOpacity>
