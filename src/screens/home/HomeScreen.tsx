@@ -18,7 +18,7 @@ export const HomeScreen = ({navigation}: any) => {
     <SafeAreaView style={tw`flex-1`}>
       <ScrollView contentContainerStyle={tw`flex-grow`}>
         <View style={[tw`flex-1 justify-start items-center`, styles.container]}>
-          <StatusBar hidden={true} />
+          <StatusBar hidden={false} />
           <Logo width={400} height={400} />
           <Text style={tw`text-yellow-500 text-2xl font-bold uppercase`}>
             Bienvenido
@@ -32,7 +32,7 @@ export const HomeScreen = ({navigation}: any) => {
           <View
             style={tw`flex-1 flex-row justify-center items-center w-full p-8 gap-4`}>
             <TouchableOpacity
-              onPress={() => navigation.navigate('Register')}
+              onPress={() => navigation.navigate('ValidationDriver')}
               style={[
                 tw`w-[170px] h-[170px] justify-center items-center bg-white`,
                 styles.border,
