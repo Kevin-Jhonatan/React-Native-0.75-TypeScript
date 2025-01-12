@@ -11,6 +11,7 @@ interface InputWithIconProps {
   placeholderTextColor?: string;
   containerStyle?: string;
   textColor?: string;
+  inputType?: 'text' | 'number' | 'email' | 'password';
 }
 
 const InputWithIcon: React.FC<InputWithIconProps> = ({
@@ -22,7 +23,19 @@ const InputWithIcon: React.FC<InputWithIconProps> = ({
   placeholderTextColor = 'gray',
   containerStyle = '',
   textColor = 'black',
+  inputType = 'text',
 }) => {
+  let keyboardType = 'default';
+  let secureTextEntry = false;
+
+  if (inputType === 'number') {
+    keyboardType = 'numeric';
+  } else if (inputType === 'email') {
+    keyboardType = 'email-address';
+  } else if (inputType === 'password') {
+    secureTextEntry = true;
+  }
+
   return (
     <View
       style={tw`flex-row items-center border-b-2 border-black ${containerStyle}`}>
@@ -32,6 +45,8 @@ const InputWithIcon: React.FC<InputWithIconProps> = ({
         value={value}
         placeholder={placeholder}
         placeholderTextColor={placeholderTextColor}
+        keyboardType={keyboardType}
+        secureTextEntry={secureTextEntry}
       />
       {iconComponent && <View style={tw`ml-2`}>{iconComponent}</View>}
     </View>

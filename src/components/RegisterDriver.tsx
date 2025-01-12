@@ -3,12 +3,12 @@ import tw from 'twrnc';
 import BusBlack from '../assets/icons/home/busBlack.svg';
 import UserIcon from '../assets/icons/home/userIcon.svg';
 import Ci from '../assets/icons/home/ci.svg';
-import { View, Text, TouchableOpacity, Alert } from 'react-native';
+import {View, Text, TouchableOpacity, Alert} from 'react-native';
 import database from '@react-native-firebase/database';
 import styles from '../styles/global.style';
 import InputWithIcon from './Input';
 
-export const RegisterForm = () => {
+export const RegisterDriver = ({navigation}: any) => {
   const [plate, setPlate] = React.useState('');
   const [name, setName] = React.useState('');
   const [lastName, setLastName] = React.useState('');
@@ -35,22 +35,22 @@ export const RegisterForm = () => {
         apellido: lastName,
       });
 
-      await database()
-        .ref(`/CONDUCTOR/${ci}`)
-        .set({
-          placa: plate.toUpperCase(),
-          nombre: name,
-          apellido: lastName,
-        });
+      await database().ref(`/CONDUCTOR/${ci}`).set({
+        placa: plate.toUpperCase(),
+        nombre: name,
+        apellido: lastName,
+      });
 
       Alert.alert('Éxito', 'Conductor registrado correctamente.');
-      console.log('Datos guardados en Firebase:', { plate, name, lastName });
+      console.log('Datos guardados en Firebase:', {plate, name, lastName});
 
       // Limpia los campos después de registrar
       setPlate('');
       setName('');
       setLastName('');
       setCI('');
+
+      navigation.navigate('RegisterBus');
     } catch (error) {
       console.error('Error al guardar los datos:', error);
       Alert.alert('Error', 'No se pudo registrar el conductor.');
@@ -120,4 +120,4 @@ export const RegisterForm = () => {
   );
 };
 
-export default RegisterForm;
+export default RegisterDriver;

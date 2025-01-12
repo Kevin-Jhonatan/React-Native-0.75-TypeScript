@@ -1,17 +1,11 @@
 import React from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import {SafeAreaView, ScrollView, Text, View} from 'react-native';
 import tw from 'twrnc';
 import styles from '../../../../styles/global.style';
 import Logo from '../../../../assets/icons/home/logo.svg';
-import RegisterBus from 'components/RegisterBus';
+import DriverExistenceCheck from 'components/DriverExistenceCheck';
 
-export const RegisterBusScreen = ({navigation}: any) => {
+export const DriverExistenceCheckScreen = ({navigation}: any) => {
   return (
     <SafeAreaView style={tw`flex-1`}>
       <ScrollView contentContainerStyle={tw`flex-grow`}>
@@ -29,18 +23,8 @@ export const RegisterBusScreen = ({navigation}: any) => {
               tw`flex-1 flex-row justify-center items-center p-8`,
               styles.border,
             ]}>
-            <RegisterBus navigation={navigation} />
+            <DriverExistenceCheck navigation={navigation} />
           </View>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('RegisterDriver')}
-            style={[
-              tw`w-[170px] h-[170px] justify-center items-center bg-white`,
-              styles.border,
-            ]}>
-            <Text style={tw`text-lg uppercase font-bold text-black`}>
-              Pasajero
-            </Text>
-          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>

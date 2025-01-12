@@ -32,7 +32,7 @@ export const HomeScreen = ({navigation}: any) => {
           <View
             style={tw`flex-1 flex-row justify-center items-center w-full p-8 gap-4`}>
             <TouchableOpacity
-              onPress={() => navigation.navigate('ValidationDriver')}
+              onPress={() => navigation.navigate('DriverExistenceCheck')}
               style={[
                 tw`w-[170px] h-[170px] justify-center items-center bg-white`,
                 styles.border,

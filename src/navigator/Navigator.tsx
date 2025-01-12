@@ -7,6 +7,8 @@ import CustomHeader from 'components/CustomHeader';
 import {RegisterScreen} from 'screens/user/driver/registerDriver/RegisterDriverScreen';
 import {ListBusScreen} from 'screens/user/passenger/ListBusScreen';
 import {DriverValidationScreen} from 'screens/user/driver/validationDriver/DriverValidationScreen';
+import {DriverExistenceCheckScreen} from 'screens/user/driver/validationDriver/DriverExistenceCheckScreen';
+import {RegisterBusScreen} from 'screens/user/driver/registerBus/RegisterBusScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -36,6 +38,15 @@ export const Navigator = () => {
       />
       {/* Driver */}
       <Stack.Screen
+        name="DriverExistenceCheck"
+        component={DriverExistenceCheckScreen}
+        options={({navigation}) => ({
+          header: () =>
+            renderHeader(navigation, 'CONDUCTOR', false, false, false),
+          headerTransparent: true,
+        })}
+      />
+      <Stack.Screen
         name="ValidationDriver"
         component={DriverValidationScreen}
         options={({navigation}) => ({
@@ -55,7 +66,7 @@ export const Navigator = () => {
       />
       <Stack.Screen
         name="RegisterBus"
-        component={RegisterScreen}
+        component={RegisterBusScreen}
         options={({navigation}) => ({
           header: () =>
             renderHeader(navigation, 'CONDUCTOR', false, false, 159),

@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import tw from 'twrnc';
 import BusBlack from '../assets/icons/home/busBlack.svg';
-import { View, Text, TouchableOpacity, Alert, Switch } from 'react-native';
+import {View, Text, TouchableOpacity, Alert, Switch} from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 import database from '@react-native-firebase/database';
 import styles from '../styles/global.style';
 import InputWithIcon from './Input';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, {Marker, PROVIDER_GOOGLE} from 'react-native-maps';
 
-export const RegisterBus = ({ navigation }: any) => {
+export const RegisterBus = ({navigation}: any) => {
   const [number, setNumber] = useState('');
   const [trufiNumber, setTrufiNumber] = useState('');
   const [serviceStatus, setServiceStatus] = useState(true);
@@ -24,23 +24,25 @@ export const RegisterBus = ({ navigation }: any) => {
   useEffect(() => {
     Geolocation.getCurrentPosition(
       position => {
-        const { latitude, longitude } = position.coords;
-        setLocation({ latitude, longitude });
+        const {latitude, longitude} = position.coords;
+        setLocation({latitude, longitude});
         setLatitude(latitude.toString());
         setLongitude(longitude.toString());
-        console.log(`Ubicación actual - Latitud: ${latitude}, Longitud: ${longitude}`);
+        console.log(
+          `Ubicación actual - Latitud: ${latitude}, Longitud: ${longitude}`,
+        );
       },
       error => {
         Alert.alert('Error', 'No se pudo obtener la ubicación actual');
         console.error(error);
       },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+      {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},
     );
   }, []);
 
   const handleMapPress = e => {
-    const { latitude, longitude } = e.nativeEvent.coordinate;
-    setLocation({ latitude, longitude });
+    const {latitude, longitude} = e.nativeEvent.coordinate;
+    setLocation({latitude, longitude});
     setLatitude(latitude.toString());
     setLongitude(longitude.toString());
   };
@@ -71,13 +73,17 @@ export const RegisterBus = ({ navigation }: any) => {
       const formattedPlate = number.toUpperCase();
       const formattedTrufiNumber = trufiNumber.toUpperCase();
 
-      const plateSnapshot = await database().ref(`/TRUFI/${formattedPlate}`).once('value');
+      const plateSnapshot = await database()
+        .ref(`/TRUFI/${formattedPlate}`)
+        .once('value');
       if (plateSnapshot.exists()) {
         Alert.alert('Error', 'La placa ya está registrada.');
         return;
       }
 
-      const conductorSnapshot = await database().ref(`/CONDUCTOR/${ci}`).once('value');
+      const conductorSnapshot = await database()
+        .ref(`/CONDUCTOR/${ci}`)
+        .once('value');
       if (!conductorSnapshot.exists()) {
         Alert.alert('Error', 'El conductor no está registrado.');
         return;
@@ -118,7 +124,7 @@ export const RegisterBus = ({ navigation }: any) => {
       setServiceStatus(true);
       setCI('');
 
-      navigation.navigate('SendUbication');
+      navigation.navigate('SendDriverLocationMap');
     } catch (error) {
       console.error('Error al guardar los datos:', error);
       Alert.alert('Error', 'No se pudo registrar el trufi.');
@@ -163,15 +169,14 @@ export const RegisterBus = ({ navigation }: any) => {
         <MapView
           provider={PROVIDER_GOOGLE}
           showsUserLocation={true}
-          style={{ flex: 1 }}
+          style={{flex: 1}}
           region={{
             latitude: location.latitude,
             longitude: location.longitude,
             latitudeDelta: 0.015,
             longitudeDelta: 0.0121,
           }}
-          onPress={handleMapPress}
-        >
+          onPress={handleMapPress}>
           <Marker coordinate={location} title="Ubicación Actual" />
         </MapView>
       </View>
@@ -202,7 +207,7 @@ export const RegisterBus = ({ navigation }: any) => {
           onValueChange={toggleRouteChange}
           value={routeChange}
           thumbColor={routeChange ? '#33A852' : '#fff'}
-          trackColor={{ false: '#ccc', true: '#33A852' }}
+          trackColor={{false: '#ccc', true: '#33A852'}}
         />
       </View>
 
@@ -212,7 +217,7 @@ export const RegisterBus = ({ navigation }: any) => {
           onValueChange={toggleServiceStatus}
           value={serviceStatus}
           thumbColor={serviceStatus ? '#33A852' : '#fff'}
-          trackColor={{ false: '#ccc', true: '#33A852' }}
+          trackColor={{false: '#ccc', true: '#33A852'}}
         />
       </View>
 

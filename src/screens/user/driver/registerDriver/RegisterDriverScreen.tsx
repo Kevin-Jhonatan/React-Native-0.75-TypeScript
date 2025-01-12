@@ -1,13 +1,20 @@
-import React, { useEffect, useState } from 'react';
-import { SafeAreaView, ScrollView, Text, View, Alert, TouchableOpacity } from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {
+  SafeAreaView,
+  ScrollView,
+  Text,
+  View,
+  Alert,
+  TouchableOpacity,
+} from 'react-native';
 import tw from 'twrnc';
 import Logo from '../../../../assets/icons/home/logo.svg';
 import styles from '../../../../styles/global.style';
-import { RegisterForm } from 'components/RegisterForm';
 import database from '@react-native-firebase/database';
 import RegisterBus from 'components/RegisterBus';
+import {RegisterDriver} from 'components/RegisterDriver';
 
-export const RegisterScreen = ({ navigation }: any) => {
+export const RegisterScreen = ({navigation}: any) => {
   const [conductorData, setConductorData] = useState(null);
   const [ci, setCI] = useState('12491899'); // CI del conductor a buscar
 
@@ -18,7 +25,7 @@ export const RegisterScreen = ({ navigation }: any) => {
       const data = snapshot.val();
       if (data) {
         // Asegúrate de agregar la clave `ci` al objeto recuperado
-        setConductorData({ ...data, ci });
+        setConductorData({...data, ci});
       } else {
         Alert.alert('Error', 'No se encontraron datos del conductor.');
       }
@@ -29,9 +36,14 @@ export const RegisterScreen = ({ navigation }: any) => {
   };
 
   // Llamar la función al montar el componente
-  useEffect(() => {
-    fetchConductorData();
-  }, [/* ci */]);
+  useEffect(
+    () => {
+      fetchConductorData();
+    },
+    [
+      /* ci */
+    ],
+  );
 
   return (
     <SafeAreaView style={tw`flex-1`}>
@@ -50,14 +62,7 @@ export const RegisterScreen = ({ navigation }: any) => {
               tw`flex-1 flex-row justify-center items-center p-8`,
               styles.border,
             ]}>
-            <RegisterForm />
-          </View>
-          <View
-            style={[
-              tw`flex-1 flex-row justify-center items-center p-8`,
-              styles.border,
-            ]}>
-           <RegisterBus navigation={navigation} />
+            <RegisterDriver navigation={navigation} />
           </View>
 
           {/* Mostrar la información del conductor */}
@@ -76,16 +81,6 @@ export const RegisterScreen = ({ navigation }: any) => {
               Cargando información del conductor...
             </Text>
           )}
-          <TouchableOpacity
-            onPress={() => navigation.navigate('SendUbication')}
-            style={[
-              tw`w-[170px] h-[170px] justify-center items-center bg-white`,
-              styles.border,
-            ]}>
-            <Text style={tw`text-lg uppercase font-bold text-black`}>
-              Pasajero
-            </Text>
-          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>

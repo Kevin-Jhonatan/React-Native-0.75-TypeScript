@@ -3,6 +3,7 @@ import React from 'react';
 import {SafeAreaView, ScrollView, Text, View} from 'react-native';
 import tw from 'twrnc';
 import styles from '../../../styles/global.style';
+import ListBus from 'components/ListBus';
 
 export const ListBusScreen = ({navigation}: any) => {
   return (
@@ -20,6 +21,7 @@ export const ListBusScreen = ({navigation}: any) => {
             time={10000}
             onPress={() => navigation.navigate('Ubication')}
           />
+          <ListBus navigation={navigation} />
         </View>
       </ScrollView>
     </SafeAreaView>
