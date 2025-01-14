@@ -20,6 +20,7 @@ export const RegisterBus = ({navigation}: any) => {
     latitude: -17.338151,
     longitude: -66.265726,
   });
+  const [loading, setLoading] = useState(false); // Estado para el loader
 
   useEffect(() => {
     Geolocation.getCurrentPosition(
@@ -68,6 +69,8 @@ export const RegisterBus = ({navigation}: any) => {
       Alert.alert('Error', 'Por favor, complete todos los campos.');
       return;
     }
+
+    setLoading(true); // Mostrar loader
 
     try {
       const formattedPlate = number.toUpperCase();
@@ -128,6 +131,8 @@ export const RegisterBus = ({navigation}: any) => {
     } catch (error) {
       console.error('Error al guardar los datos:', error);
       Alert.alert('Error', 'No se pudo registrar el trufi.');
+    } finally {
+      setLoading(false); // Ocultar loader
     }
   };
 
@@ -144,6 +149,9 @@ export const RegisterBus = ({navigation}: any) => {
           placeholder="Placa del Trufi"
           inputStyle="uppercase"
           iconComponent={<BusBlack width={25} height={25} style={tw`ml-2`} />}
+          autoCapitalize="characters"
+          autoCorrect={false}
+          maxLength={10}
         />
       </View>
 
@@ -153,6 +161,9 @@ export const RegisterBus = ({navigation}: any) => {
           onChangeText={setCI}
           placeholder="C.I. del Conductor"
           inputStyle="uppercase"
+          autoCapitalize="characters"
+          autoCorrect={false}
+          maxLength={10}
         />
       </View>
 
@@ -162,6 +173,9 @@ export const RegisterBus = ({navigation}: any) => {
           onChangeText={setTrufiNumber}
           placeholder="Número del Trufi"
           inputStyle="uppercase"
+          autoCapitalize="characters"
+          autoCorrect={false}
+          maxLength={10}
         />
       </View>
 
@@ -223,9 +237,10 @@ export const RegisterBus = ({navigation}: any) => {
 
       <TouchableOpacity
         style={[tw`bg-[#222936] py-2 mt-10 mx-auto w-full`, styles.border]}
-        onPress={saveTrufi}>
+        onPress={saveTrufi}
+        disabled={loading}>
         <Text style={tw`text-white text-lg text-center uppercase`}>
-          Registrar
+          {loading ? 'Registrando...' : 'Registrar'}
         </Text>
       </TouchableOpacity>
     </View>

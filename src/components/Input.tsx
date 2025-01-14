@@ -1,8 +1,8 @@
 import React from 'react';
-import {View, TextInput} from 'react-native';
+import {View, TextInput, TextInputProps} from 'react-native';
 import tw from 'twrnc';
 
-interface InputWithIconProps {
+interface InputWithIconProps extends TextInputProps {
   value: string;
   onChangeText: (text: string) => void;
   placeholder?: string;
@@ -24,6 +24,10 @@ const InputWithIcon: React.FC<InputWithIconProps> = ({
   containerStyle = '',
   textColor = 'black',
   inputType = 'text',
+  autoCapitalize = 'none',
+  autoCorrect = false,
+  maxLength = 255,
+  ...restProps
 }) => {
   let keyboardType = 'default';
   let secureTextEntry = false;
@@ -47,6 +51,10 @@ const InputWithIcon: React.FC<InputWithIconProps> = ({
         placeholderTextColor={placeholderTextColor}
         keyboardType={keyboardType}
         secureTextEntry={secureTextEntry}
+        autoCapitalize={autoCapitalize}
+        autoCorrect={autoCorrect}
+        maxLength={maxLength}
+        {...restProps}
       />
       {iconComponent && <View style={tw`ml-2`}>{iconComponent}</View>}
     </View>

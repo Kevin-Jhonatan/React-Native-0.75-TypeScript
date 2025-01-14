@@ -11,6 +11,8 @@ const ValidationPhoneDriver = ({navigation}: any) => {
   const [phoneNumber, setPhoneNumber] = useState('+591'); // Número de teléfono inicial con código de país
   const [confirm, setConfirm] = useState(null); // Almacena la confirmación del OTP
   const [code, setCode] = useState(''); // Código OTP ingresado por el usuario
+  const [loading, setLoading] = useState(false); // Estado para el loader
+  const [confirming, setConfirming] = useState(false); // Estado para confirmar el código
 
   useEffect(() => {
     const subscriber = auth().onAuthStateChanged(user => {
@@ -29,6 +31,7 @@ const ValidationPhoneDriver = ({navigation}: any) => {
   }, [navigation]);
 
   const signInWithPhoneNumber = async (phoneNumber: string) => {
+    setLoading(true); // Activar el loader
     try {
       console.log('Enviando código al número:', phoneNumber);
       const confirmation = await auth().signInWithPhoneNumber(phoneNumber);
@@ -43,6 +46,8 @@ const ValidationPhoneDriver = ({navigation}: any) => {
         'Error',
         'No se pudo enviar el código. Verifica el número e inténtalo nuevamente.',
       );
+    } finally {
+      setLoading(false); // Desactivar el loader
     }
   };
 
@@ -52,6 +57,7 @@ const ValidationPhoneDriver = ({navigation}: any) => {
       return;
     }
 
+    setConfirming(true); // Activar el estado de confirmación
     try {
       console.log('Confirmando código:', code);
       await confirm.confirm(code);
@@ -61,6 +67,8 @@ const ValidationPhoneDriver = ({navigation}: any) => {
     } catch (error) {
       console.error('Error al confirmar el código:', error);
       Alert.alert('Error', 'El código ingresado no es válido.');
+    } finally {
+      setConfirming(false); // Desactivar el estado de confirmación
     }
   };
 
@@ -77,6 +85,9 @@ const ValidationPhoneDriver = ({navigation}: any) => {
           placeholder="+591XXXXXXXX"
           iconComponent={<PhoneIcon width={25} height={25} style={tw`ml-2`} />}
           inputType="number"
+          autoCapitalize="characters"
+          autoCorrect={false}
+          maxLength={12}
         />
       ) : (
         <InputWithIcon
@@ -86,6 +97,8 @@ const ValidationPhoneDriver = ({navigation}: any) => {
           keyboardType="number-pad"
           iconComponent={<CodeIcon width={25} height={25} style={tw`ml-2`} />}
           inputType="number"
+          autoCapitalize="characters"
+          maxLength={6}
         />
       )}
 
@@ -93,9 +106,16 @@ const ValidationPhoneDriver = ({navigation}: any) => {
         style={[tw`bg-[#222936] py-2 mt-10 mx-auto w-full`, styles.border]}
         onPress={
           confirm ? confirmCode : () => signInWithPhoneNumber(phoneNumber)
-        }>
+        }
+        disabled={loading || confirming}>
         <Text style={tw`text-white text-lg text-center uppercase`}>
-          {confirm ? 'Confirmar Código' : 'Enviar Código'}
+          {loading
+            ? 'Enviando...'
+            : confirming
+            ? 'Confirmando...'
+            : confirm
+            ? 'Confirmar Código'
+            : 'Enviar Código'}
         </Text>
       </TouchableOpacity>
     </View>

@@ -1,43 +1,71 @@
 import React from 'react';
 import tw from 'twrnc';
 import Ci from '../assets/icons/home/ci.svg';
+import Plate from '../assets/icons/home/bus.svg';
 import {View, Text, TouchableOpacity, Alert} from 'react-native';
 import styles from '../styles/global.style';
 import InputWithIcon from './Input';
 import database from '@react-native-firebase/database';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const DriverExistenceCheck = ({navigation}: any) => {
   const [ci, setCI] = React.useState('');
+  const [plate, setPlate] = React.useState('');
   const [loading, setLoading] = React.useState(false);
 
-  // Función para verificar si el C.I. ya existe en la base de datos
   const checkDriverExistence = async () => {
-    if (!ci) {
-      Alert.alert('Error', 'Por favor ingrese un C.I.');
+    if (!ci || !plate) {
+      Alert.alert(
+        'Error',
+        `Por favor ingrese los datos faltantes: ${!ci ? 'C.I.' : ''} ${
+          !plate ? 'Placa' : ''
+        }`,
+      );
       return;
     }
 
     setLoading(true);
 
     try {
-      // Verificar si el conductor existe en la base de datos
-      const snapshot = await database().ref(`/CONDUCTOR/${ci}`).once('value');
-      if (snapshot.exists()) {
-        const driverData = snapshot.val();
+      // Convertir placa a mayúsculas para asegurar consistencia
+      const normalizedPlate = plate.toUpperCase();
+
+      // Verificar si el conductor existe por C.I.
+      const ciSnapshot = await database().ref(`/CONDUCTOR/${ci}`).once('value');
+      const plateSnapshot = await database()
+        .ref(`/TRUFI/${normalizedPlate}`)
+        .once('value');
+
+      if (!ciSnapshot.exists()) {
+        console.error(`El C.I. ${ci} no fue encontrado.`);
+        Alert.alert('Error', 'No se ha encontrado un conductor con ese C.I.');
+      } else if (!plateSnapshot.exists()) {
+        console.error(`La placa ${normalizedPlate} no fue encontrada.`);
+        Alert.alert('Error', 'No se ha encontrado un registro con esa placa.');
+      } else {
+        const driverData = ciSnapshot.val();
+
+        // Guardar C.I. y placa en AsyncStorage
+        await AsyncStorage.setItem('driverCI', ci);
+        await AsyncStorage.setItem('driverPlate', normalizedPlate);
+
+        // Confirmar que los valores se han guardado
+        console.log(
+          'Datos guardados en AsyncStorage:',
+          await AsyncStorage.getItem('driverCI'),
+          await AsyncStorage.getItem('driverPlate'),
+        );
+
         Alert.alert(
-          'Conductor encontrado',
+          'Datos encontrados',
           `Conductor: ${driverData.nombre} ${driverData.apellido}`,
         );
+
         navigation.navigate('SendDriverLocationMap');
-      } else {
-        Alert.alert(
-          'No encontrado',
-          'No se ha encontrado un conductor con ese C.I.',
-        );
       }
     } catch (error) {
-      console.error('Error al verificar el conductor:', error);
-      Alert.alert('Error', 'Hubo un problema al verificar el C.I.');
+      console.error('Error al verificar los datos:', error);
+      Alert.alert('Error', 'Hubo un problema al verificar los datos.');
     } finally {
       setLoading(false);
     }
@@ -49,7 +77,8 @@ export const DriverExistenceCheck = ({navigation}: any) => {
         Verificación del Conductor
       </Text>
 
-      <View style={tw`flex-row items-center`}>
+      {/* Input para C.I. */}
+      <View style={tw`flex-row items-center mt-4`}>
         <InputWithIcon
           value={ci}
           onChangeText={setCI}
@@ -58,6 +87,25 @@ export const DriverExistenceCheck = ({navigation}: any) => {
           iconComponent={
             <Ci width={25} height={25} style={tw`ml-2`} fill={'black'} />
           }
+          autoCapitalize="characters"
+          autoCorrect={false}
+          maxLength={10}
+        />
+      </View>
+
+      {/* Input para Placa */}
+      <View style={tw`flex-row items-center mt-4`}>
+        <InputWithIcon
+          value={plate}
+          onChangeText={text => setPlate(text.toUpperCase())} // Convertir a mayúsculas automáticamente
+          placeholder="Placa"
+          inputStyle="uppercase"
+          iconComponent={
+            <Plate width={25} height={25} style={tw`ml-2`} fill={'black'} />
+          }
+          autoCapitalize="characters"
+          autoCorrect={false}
+          maxLength={10}
         />
       </View>
 

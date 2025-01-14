@@ -1,24 +1,27 @@
 import React from 'react';
 import tw from 'twrnc';
-import BusBlack from '../assets/icons/home/busBlack.svg';
 import UserIcon from '../assets/icons/home/userIcon.svg';
 import Ci from '../assets/icons/home/ci.svg';
+import EmailIcon from '../assets/icons/home/bus.svg';
 import {View, Text, TouchableOpacity, Alert} from 'react-native';
 import database from '@react-native-firebase/database';
 import styles from '../styles/global.style';
 import InputWithIcon from './Input';
 
 export const RegisterDriver = ({navigation}: any) => {
-  const [plate, setPlate] = React.useState('');
+  const [email, setEmail] = React.useState('');
   const [name, setName] = React.useState('');
   const [lastName, setLastName] = React.useState('');
   const [ci, setCI] = React.useState('');
+  const [loading, setLoading] = React.useState(false); // Estado para el loader
 
   const saveDrive = async () => {
-    if (!plate || !name || !lastName || !ci) {
+    if (!email || !name || !lastName || !ci) {
       Alert.alert('Error', 'Por favor, complete todos los campos.');
       return;
     }
+
+    setLoading(true); // Mostrar loader
 
     try {
       // Verificar si el CI ya existe en la base de datos
@@ -30,30 +33,32 @@ export const RegisterDriver = ({navigation}: any) => {
 
       // Si no existe, guardar los datos en Realtime Database usando el CI como clave única
       console.log('Datos a guardar en Firebase:', {
-        placa: plate.toUpperCase(),
         nombre: name,
         apellido: lastName,
+        correo: email,
       });
 
       await database().ref(`/CONDUCTOR/${ci}`).set({
-        placa: plate.toUpperCase(),
-        nombre: name,
-        apellido: lastName,
+        nombre: name.toUpperCase(),
+        apellido: lastName.toUpperCase(),
+        correo: email.toLowerCase(),
       });
 
       Alert.alert('Éxito', 'Conductor registrado correctamente.');
-      console.log('Datos guardados en Firebase:', {plate, name, lastName});
+      console.log('Datos guardados en Firebase:', {email, name, lastName});
 
       // Limpia los campos después de registrar
-      setPlate('');
       setName('');
       setLastName('');
+      setEmail('');
       setCI('');
 
       navigation.navigate('RegisterBus');
     } catch (error) {
       console.error('Error al guardar los datos:', error);
       Alert.alert('Error', 'No se pudo registrar el conductor.');
+    } finally {
+      setLoading(false); // Ocultar loader
     }
   };
 
@@ -65,11 +70,16 @@ export const RegisterDriver = ({navigation}: any) => {
 
       <View style={tw`flex-row items-center`}>
         <InputWithIcon
-          value={plate}
-          onChangeText={setPlate}
-          placeholder="PLACA"
+          value={ci}
+          onChangeText={setCI}
+          placeholder="C.I."
           inputStyle="uppercase"
-          iconComponent={<BusBlack width={25} height={25} style={tw`ml-2`} />}
+          iconComponent={
+            <Ci width={25} height={25} style={tw`ml-2`} fill={'black'} />
+          }
+          autoCapitalize="characters"
+          autoCorrect={false}
+          maxLength={10}
         />
       </View>
 
@@ -82,6 +92,9 @@ export const RegisterDriver = ({navigation}: any) => {
           iconComponent={
             <UserIcon width={25} height={25} style={tw`ml-2`} fill={'black'} />
           }
+          autoCapitalize="characters"
+          autoCorrect={false}
+          maxLength={25}
         />
       </View>
 
@@ -94,26 +107,32 @@ export const RegisterDriver = ({navigation}: any) => {
           iconComponent={
             <UserIcon width={25} height={25} style={tw`ml-2`} fill={'black'} />
           }
+          autoCapitalize="characters"
+          autoCorrect={false}
+          maxLength={25}
         />
       </View>
 
       <View style={tw`flex-row items-center`}>
         <InputWithIcon
-          value={ci}
-          onChangeText={setCI}
-          placeholder="C.I."
-          inputStyle="uppercase"
-          iconComponent={
-            <Ci width={25} height={25} style={tw`ml-2`} fill={'black'} />
-          }
+          value={email}
+          onChangeText={setEmail}
+          placeholder="CORREO ELECTRÓNICO"
+          inputType="email"
+          iconComponent={<EmailIcon width={25} height={25} style={tw`ml-2`} />}
+          autoCapitalize="characters"
+          autoCorrect={false}
+          maxLength={40}
+          inputStyle="lowercase"
         />
       </View>
 
       <TouchableOpacity
         style={[tw`bg-[#222936] py-2 mt-10 mx-auto w-full`, styles.border]}
-        onPress={saveDrive}>
+        onPress={saveDrive}
+        disabled={loading}>
         <Text style={tw`text-white text-lg text-center uppercase`}>
-          Registrar
+          {loading ? 'Registrando...' : 'Registrar'}
         </Text>
       </TouchableOpacity>
     </View>

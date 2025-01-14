@@ -13,9 +13,10 @@ import styles from '../../../../styles/global.style';
 import CustomFooter from 'components/CustomFooter';
 import Geolocation from '@react-native-community/geolocation';
 import MapView, {Marker, PROVIDER_GOOGLE} from 'react-native-maps';
-import MapViewDirections from 'react-native-maps-directions';
 import Bus from 'assets/icons/home/bus.svg';
 import Location from 'assets/icons/home/location.svg';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import database from '@react-native-firebase/database';
 
 const GOOGLE_MAPS_APIKEY = 'AIzaSyAfctC8adBPlAm9I-jaH0kJNTnzEhKqMa0';
 
@@ -28,63 +29,57 @@ export const DriverMapScreen = () => {
     longitudeDelta: 0.0121,
   });
 
-  const [duration, setDuration] = useState(0);
+  const [driverCI, setDriverCI] = useState('');
+  const [driverPlate, setDriverPlate] = useState('');
+  const watchId = useRef<number | null>(null);
 
-  const origin = {
-    latitude: -17.338552892340243,
-    longitude: -66.26542967194706,
+  // Actualizar ubicación en Firebase
+  const updateLocationInDatabase = async (latitude: number, longitude: number) => {
+    if (!driverCI || !driverPlate) {
+      return; // Evitar llamadas innecesarias si no están los datos
+    }
+    try {
+      await database()
+        .ref(`/TRUFI/${driverPlate}/ubicacion_actual`)
+        .set({latitude, longitude});
+      console.log(`Ubicación actualizada para ${driverPlate}:`, {latitude, longitude});
+    } catch (error) {
+      console.error('Error al actualizar la ubicación en Firebase:', error);
+    }
   };
 
-  const destination = {
-    latitude: -17.39978814240143,
-    longitude: -66.14228137977041,
-  };
-
-  const waypoints = [
-    {latitude: -17.349325, longitude: -66.257205},
-    {latitude: -17.39107676884926, longitude: -66.25080724762616},
-    {latitude: -17.39388, longitude: -66.174089},
-    {latitude: -17.394047, longitude: -66.17075},
-    {latitude: -17.393026, longitude: -66.161082},
-    {latitude: -17.399382486699547, longitude: -66.16044390689545},
-    {latitude: -17.39714245915778, longitude: -66.145297195534},
-    {latitude: -17.39814994910454, longitude: -66.13992678007511},
-  ];
-
+  // Obtener la ubicación del usuario y actualizar en Firebase
   const getUsersCurrentLocation = () => {
     Geolocation.getCurrentPosition(
       position => {
-        console.log('Ubicación actual:', position);
         const {latitude, longitude} = position.coords;
-        if (latitude && longitude) {
-          setLocation({
-            latitude: latitude,
-            longitude: longitude,
-            latitudeDelta: 0.003,
-            longitudeDelta: 0.003,
-          });
-          if (mapRef.current) {
-            mapRef.current.animateToRegion(
-              {
-                latitude: latitude,
-                longitude: longitude,
-                latitudeDelta: 0.003,
-                longitudeDelta: 0.003,
-              },
-              1000,
-            );
-          }
-        } else {
-          console.log('Error en las coordenadas');
+        updateLocationInDatabase(latitude, longitude); // Actualizar en Firebase
+        setLocation({
+          latitude,
+          longitude,
+          latitudeDelta: 0.003,
+          longitudeDelta: 0.003,
+        });
+        if (mapRef.current) {
+          mapRef.current.animateToRegion(
+            {
+              latitude,
+              longitude,
+              latitudeDelta: 0.003,
+              longitudeDelta: 0.003,
+            },
+            1000,
+          );
         }
       },
       error => {
-        console.log(error.code, error.message);
+        console.log('Error al obtener la ubicación:', error);
       },
       {enableHighAccuracy: true, timeout: 10000, maximumAge: 10000},
     );
   };
 
+  // Solicitar permiso de ubicación
   const requestLocationPermission = async () => {
     if (Platform.OS === 'android') {
       try {
@@ -93,7 +88,7 @@ export const DriverMapScreen = () => {
         );
         if (granted === PermissionsAndroid.RESULTS.GRANTED) {
           console.log('Permiso concedido');
-          getUsersCurrentLocation();
+          startTracking(); // Iniciar el rastreo de ubicación
         } else {
           Alert.alert('Permiso denegado', 'No se puede acceder a la ubicación');
         }
@@ -103,8 +98,56 @@ export const DriverMapScreen = () => {
     }
   };
 
+  // Iniciar el rastreo de ubicación en tiempo real
+  const startTracking = () => {
+    watchId.current = Geolocation.watchPosition(
+      position => {
+        const {latitude, longitude} = position.coords;
+        updateLocationInDatabase(latitude, longitude); // Actualizar en Firebase
+        setLocation(prev => ({
+          ...prev,
+          latitude,
+          longitude,
+        }));
+      },
+      error => {
+        console.log('Error al rastrear ubicación:', error);
+      },
+      {enableHighAccuracy: true, distanceFilter: 2}, // Actualizar cada 10 metros
+    );
+  };
+
+  // Detener el rastreo de ubicación
+  const stopTracking = () => {
+    if (watchId.current !== null) {
+      Geolocation.clearWatch(watchId.current);
+      watchId.current = null;
+    }
+  };
+
   useEffect(() => {
+    const getDriverData = async () => {
+      try {
+        const storedCI = await AsyncStorage.getItem('driverCI');
+        const storedPlate = await AsyncStorage.getItem('driverPlate');
+        if (storedCI && storedPlate) {
+          setDriverCI(storedCI);
+          setDriverPlate(storedPlate);
+          console.log(`Datos recuperados: C.I.=${storedCI}, Placa=${storedPlate}`);
+        } else {
+          console.log('No se encontraron datos del conductor en AsyncStorage.');
+        }
+      } catch (error) {
+        console.error('Error al recuperar datos del conductor:', error);
+      }
+    };
+
+    getDriverData();
     requestLocationPermission();
+
+    return () => {
+      stopTracking(); // Detener el seguimiento al desmontar el componente
+    };
   }, []);
 
   return (
@@ -118,10 +161,7 @@ export const DriverMapScreen = () => {
           region={location}
           showsUserLocation={true}
           followsUserLocation={true}
-          showsMyLocationButton={false}
-          onRegionChangeComplete={region => console.log('Region:', region)}>
-          <Marker coordinate={origin} title="Punto A" />
-          <Marker coordinate={destination} title="Punto B" />
+          showsMyLocationButton={false}>
           <Marker
             coordinate={{
               latitude: location.latitude,
@@ -130,22 +170,6 @@ export const DriverMapScreen = () => {
             title="Ubicación Actual">
             <Bus width={50} height={50} />
           </Marker>
-          <MapViewDirections
-            origin={origin}
-            destination={destination}
-            waypoints={waypoints}
-            apikey={GOOGLE_MAPS_APIKEY}
-            strokeWidth={6}
-            strokeColor="blue"
-            onReady={result => {
-              setDuration(Math.round(result.duration * 60));
-              console.log(`Distancia: ${result.distance} km`);
-              console.log(`Duración: ${result.duration} min`);
-            }}
-            onError={errorMessage => {
-              console.log('Error:', errorMessage);
-            }}
-          />
         </MapView>
         <TouchableOpacity
           style={[
@@ -155,7 +179,7 @@ export const DriverMapScreen = () => {
           <Location width={35} height={35} />
         </TouchableOpacity>
         <View style={tw`absolute bottom-0 left-0 right-0`}>
-          <CustomFooter plate="ABC-1234" name="Kevin Jhonatan" userCount={5} />
+          <CustomFooter plate={driverPlate} name="Conductor" userCount={5} />
         </View>
       </View>
     </SafeAreaView>
