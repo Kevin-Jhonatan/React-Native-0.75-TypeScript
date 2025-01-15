@@ -1,6 +1,7 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import tw from 'twrnc';
 import {View, Text, Switch, SafeAreaView} from 'react-native';
+import database from '@react-native-firebase/database';
 import Users from '../assets/icons/home/users.svg';
 import BusWhite from '../assets/icons/home/busWhite.svg';
 import styles from '../styles/global.style';
@@ -20,9 +21,46 @@ const CustomFooter = ({
 }) => {
   const [isEnabled, setIsEnabled] = useState(false);
 
+  // Recuperar el estado del servicio desde Firebase
+  useEffect(() => {
+    const fetchServiceStatus = async () => {
+      if (!plate) {
+        return;
+      }
+      try {
+        const snapshot = await database()
+          .ref(`/TRUFI/${plate}/servicio`)
+          .once('value');
+        if (snapshot.exists()) {
+          setIsEnabled(snapshot.val());
+        }
+      } catch (error) {
+        console.error('Error al recuperar el estado del servicio:', error);
+      }
+    };
+
+    fetchServiceStatus();
+  }, [plate]);
+
+  // Guardar el estado del servicio en Firebase
+  const updateServiceStatus = async (status: boolean) => {
+    if (!plate) {
+      return;
+    }
+    try {
+      await database().ref(`/TRUFI/${plate}/servicio`).set(status);
+      console.log(
+        `Estado del servicio actualizado a: ${status ? 'on' : 'off'}`,
+      );
+    } catch (error) {
+      console.error('Error al actualizar el estado del servicio:', error);
+    }
+  };
+
   const toggleSwitch = () => {
-    setIsEnabled(previousState => !previousState);
-    console.log(`Toggle de servicio está: ${!isEnabled ? 'on' : 'off'}`);
+    const newStatus = !isEnabled;
+    setIsEnabled(newStatus);
+    updateServiceStatus(newStatus); // Guardar el nuevo estado en Firebase
   };
 
   const formatTime = (seconds: number) => {

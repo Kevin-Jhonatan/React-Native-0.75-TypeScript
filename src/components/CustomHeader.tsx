@@ -1,10 +1,12 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import tw from 'twrnc';
 import {View, Text, Switch, TouchableOpacity, SafeAreaView} from 'react-native';
 import Back from '../assets/icons/home/back.svg';
 import Notify from '../assets/icons/home/notify.svg';
 import NoNotify from '../assets/icons/home/noNotify.svg';
 import styles from '../styles/global.style';
+import database from '@react-native-firebase/database';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const CustomHeader = ({
   title,
@@ -22,15 +24,54 @@ const CustomHeader = ({
   const [isEnabled, setIsEnabled] = useState(false);
   const [notifyEnabled, setNotifyEnabled] = useState(false);
 
-  const toggleSwitch = () => {
-    setIsEnabled(previousState => !previousState);
-    console.log(`Toggle está: ${!isEnabled ? 'on' : 'off'}`);
+  // Función para obtener la placa desde AsyncStorage
+  const getPlateFromAsyncStorage = async () => {
+    const plate = await AsyncStorage.getItem('driverPlate');
+    return plate;
+  };
+
+  // Cargar el estado de cambio_ruta al inicio
+  useEffect(() => {
+    const loadRouteChangeState = async () => {
+      const plate = await getPlateFromAsyncStorage();
+      if (plate) {
+        const trufiRef = database().ref(`/TRUFI/${plate}/cambio_ruta`);
+        trufiRef.once('value', snapshot => {
+          const changeRoute = snapshot.val();
+          setIsEnabled(changeRoute || false); // Establece el valor inicial del toggle
+        });
+      }
+    };
+
+    loadRouteChangeState();
+  }, []);
+
+  // Función para actualizar el valor de cambio_ruta en Firebase
+  const updateRouteChangeInDatabase = async (newState: boolean) => {
+    const plate = await getPlateFromAsyncStorage();
+    if (plate) {
+      const trufiRef = database().ref(`/TRUFI/${plate}`);
+      await trufiRef.update({
+        cambio_ruta: newState,
+      });
+      console.log(`Cambio de ruta actualizado a: ${newState}`);
+    }
+  };
+
+  // Manejo del toggle de cambio de ruta
+  const toggleSwitch = async () => {
+    const newState = !isEnabled;
+    setIsEnabled(newState); // Cambia el estado local
+    console.log(`Toggle está: ${newState ? 'on' : 'off'}`);
+
+    // Actualiza el valor de cambio_ruta en Firebase
+    await updateRouteChangeInDatabase(newState);
   };
 
   const handleNotifyToggle = () => {
     setNotifyEnabled(previousState => !previousState);
     console.log(
-      `Toggle de notificacion está: ${!notifyEnabled ? 'on' : 'off'}`,
+      `Toggle de notificación está: ${!notifyEnabled ? 'on' : 'off'}`,
     );
   };
 

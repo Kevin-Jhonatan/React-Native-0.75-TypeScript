@@ -30,38 +30,56 @@ export const DriverExistenceCheck = ({navigation}: any) => {
       // Convertir placa a mayúsculas para asegurar consistencia
       const normalizedPlate = plate.toUpperCase();
 
-      // Verificar si el conductor existe por C.I.
-      const ciSnapshot = await database().ref(`/CONDUCTOR/${ci}`).once('value');
+      // Verificar si el registro de TRUFI existe
       const plateSnapshot = await database()
         .ref(`/TRUFI/${normalizedPlate}`)
         .once('value');
 
-      if (!ciSnapshot.exists()) {
-        console.error(`El C.I. ${ci} no fue encontrado.`);
-        Alert.alert('Error', 'No se ha encontrado un conductor con ese C.I.');
-      } else if (!plateSnapshot.exists()) {
+      if (!plateSnapshot.exists()) {
         console.error(`La placa ${normalizedPlate} no fue encontrada.`);
         Alert.alert('Error', 'No se ha encontrado un registro con esa placa.');
       } else {
-        const driverData = ciSnapshot.val();
+        const trufiData = plateSnapshot.val();
+        const conductorCIPath = trufiData.conductor_ci;
 
-        // Guardar C.I. y placa en AsyncStorage
-        await AsyncStorage.setItem('driverCI', ci);
-        await AsyncStorage.setItem('driverPlate', normalizedPlate);
+        if (!conductorCIPath) {
+          console.error('El campo "conductor_ci" no está definido en TRUFI.');
+          Alert.alert(
+            'Error',
+            'No se encontró un conductor asociado a esta placa.',
+          );
+          return;
+        }
 
-        // Confirmar que los valores se han guardado
-        console.log(
-          'Datos guardados en AsyncStorage:',
-          await AsyncStorage.getItem('driverCI'),
-          await AsyncStorage.getItem('driverPlate'),
-        );
+        // Extraer el C.I. del path
+        const expectedCI = conductorCIPath.split('/').pop(); // Obtiene "1234567899" de "/CONDUCTOR/1234567899"
 
-        Alert.alert(
-          'Datos encontrados',
-          `Conductor: ${driverData.nombre} ${driverData.apellido}`,
-        );
+        if (ci !== expectedCI) {
+          console.error(
+            `El C.I. ingresado (${ci}) no coincide con el registrado (${expectedCI}).`,
+          );
+          Alert.alert(
+            'Error',
+            'El C.I. ingresado no coincide con el registrado para esta placa.',
+          );
+        } else {
+          console.log(
+            `Validación exitosa para C.I.=${ci} y Placa=${normalizedPlate}`,
+          );
 
-        navigation.navigate('SendDriverLocationMap');
+          // Guardar C.I. y placa en AsyncStorage
+          await AsyncStorage.setItem('driverCI', ci);
+          await AsyncStorage.setItem('driverPlate', normalizedPlate);
+
+          console.log(
+            'Datos guardados en AsyncStorage:',
+            await AsyncStorage.getItem('driverCI'),
+            await AsyncStorage.getItem('driverPlate'),
+          );
+
+          Alert.alert('Validación exitosa', 'Los datos coinciden.');
+          navigation.navigate('SendDriverLocationMap');
+        }
       }
     } catch (error) {
       console.error('Error al verificar los datos:', error);

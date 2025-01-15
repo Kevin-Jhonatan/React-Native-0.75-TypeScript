@@ -18,8 +18,6 @@ import Location from 'assets/icons/home/location.svg';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import database from '@react-native-firebase/database';
 
-const GOOGLE_MAPS_APIKEY = 'AIzaSyAfctC8adBPlAm9I-jaH0kJNTnzEhKqMa0';
-
 export const DriverMapScreen = () => {
   const mapRef = useRef(null);
   const [location, setLocation] = useState({
@@ -28,21 +26,54 @@ export const DriverMapScreen = () => {
     latitudeDelta: 0.015,
     longitudeDelta: 0.0121,
   });
-
   const [driverCI, setDriverCI] = useState('');
   const [driverPlate, setDriverPlate] = useState('');
   const watchId = useRef<number | null>(null);
+  const [driverName, setDriverName] = useState('');
+
+  const fetchDriverName = async () => {
+    if (!driverCI) {
+      return;
+    }
+
+    try {
+      const snapshot = await database()
+        .ref(`/CONDUCTOR/${driverCI}/nombre`)
+        .once('value');
+      if (snapshot.exists()) {
+        setDriverName(snapshot.val());
+      } else {
+        console.log(`No se encontró el conductor con CI: ${driverCI}`);
+      }
+    } catch (error) {
+      console.error('Error al recuperar el nombre del conductor:', error);
+    }
+  };
 
   // Actualizar ubicación en Firebase
-  const updateLocationInDatabase = async (latitude: number, longitude: number) => {
-    if (!driverCI || !driverPlate) {
-      return; // Evitar llamadas innecesarias si no están los datos
+  const updateLocationInDatabase = async (
+    latitude: number,
+    longitude: number,
+  ) => {
+    if (!driverPlate) {
+      console.log('Placa no definidos. No se puede actualizar Firebase.');
+      return;
     }
     try {
-      await database()
-        .ref(`/TRUFI/${driverPlate}/ubicacion_actual`)
-        .set({latitude, longitude});
-      console.log(`Ubicación actualizada para ${driverPlate}:`, {latitude, longitude});
+      const locationRef = database().ref(
+        `/TRUFI/${driverPlate}/ubicacion_actual`,
+      );
+
+      // Escribir datos en Firebase
+      await locationRef.set({latitude, longitude});
+
+      // Configurar onDisconnect
+      locationRef.onDisconnect().remove();
+
+      console.log(`Ubicación actualizada para ${driverPlate}:`, {
+        latitude,
+        longitude,
+      });
     } catch (error) {
       console.error('Error al actualizar la ubicación en Firebase:', error);
     }
@@ -95,14 +126,25 @@ export const DriverMapScreen = () => {
       } catch (error) {
         console.warn(error);
       }
+    } else {
+      // Si es iOS, no es necesario pedir el permiso manualmente en este caso
+      startTracking();
     }
   };
 
   // Iniciar el rastreo de ubicación en tiempo real
   const startTracking = () => {
+    if (!driverPlate) {
+      console.log(
+        'Datos de conductor no disponibles PLACA, no se puede iniciar el rastreo',
+      );
+      return;
+    }
+
     watchId.current = Geolocation.watchPosition(
       position => {
         const {latitude, longitude} = position.coords;
+        console.log('Ubicación capturada:', {latitude, longitude});
         updateLocationInDatabase(latitude, longitude); // Actualizar en Firebase
         setLocation(prev => ({
           ...prev,
@@ -113,7 +155,7 @@ export const DriverMapScreen = () => {
       error => {
         console.log('Error al rastrear ubicación:', error);
       },
-      {enableHighAccuracy: true, distanceFilter: 2}, // Actualizar cada 10 metros
+      {enableHighAccuracy: true, distanceFilter: 2}, // Actualizar cada 2 metros
     );
   };
 
@@ -133,7 +175,10 @@ export const DriverMapScreen = () => {
         if (storedCI && storedPlate) {
           setDriverCI(storedCI);
           setDriverPlate(storedPlate);
-          console.log(`Datos recuperados: C.I.=${storedCI}, Placa=${storedPlate}`);
+          console.log(
+            `Datos recuperados: C.I.=${storedCI}, Placa=${storedPlate}`,
+          );
+          fetchDriverName();
         } else {
           console.log('No se encontraron datos del conductor en AsyncStorage.');
         }
@@ -143,12 +188,12 @@ export const DriverMapScreen = () => {
     };
 
     getDriverData();
-    requestLocationPermission();
+    requestLocationPermission(); // Pedir permiso de ubicación
 
     return () => {
       stopTracking(); // Detener el seguimiento al desmontar el componente
     };
-  }, []);
+  }, [driverCI, driverPlate]); // Recalcular cada vez que el CI o la placa cambien
 
   return (
     <SafeAreaView style={[tw`flex-1`, styles.container]}>
@@ -179,9 +224,11 @@ export const DriverMapScreen = () => {
           <Location width={35} height={35} />
         </TouchableOpacity>
         <View style={tw`absolute bottom-0 left-0 right-0`}>
-          <CustomFooter plate={driverPlate} name="Conductor" userCount={5} />
+          <CustomFooter plate={driverPlate} name={driverName} userCount={5} />
         </View>
       </View>
     </SafeAreaView>
   );
 };
+
+export default DriverMapScreen;
