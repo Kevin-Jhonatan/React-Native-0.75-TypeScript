@@ -1,5 +1,5 @@
 import React, {useEffect, useState, useRef} from 'react';
-import {Alert, StatusBar, View, TouchableOpacity} from 'react-native';
+import {Alert, StatusBar, View, TouchableOpacity, Text} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import tw from 'twrnc';
 import styles from '../../../styles/global.style';
@@ -24,8 +24,9 @@ export const PassengerMapScreen = () => {
     {latitude: number; longitude: number}[]
   >([]);
   const [busCount, setBusCount] = useState(0);
-  const [travelTime, setTravelTime] = useState(0); // Estado para el tiempo estimado
-  const [userCount, setUserCount] = useState(0); // Estado para contar los usuarios
+  const [travelTime, setTravelTime] = useState(0);
+  const [userCount, setUserCount] = useState(0);
+  const [changeRoute, setChangeRoute] = useState(false); // Nuevo estado para manejar el cambio de ruta
 
   const destination = {
     latitude: -17.39978814240143,
@@ -34,10 +35,8 @@ export const PassengerMapScreen = () => {
 
   const GOOGLE_MAPS_APIKEY = 'AIzaSyAfctC8adBPlAm9I-jaH0kJNTnzEhKqMa0';
 
-  // Referencia de Firebase para el contador de usuarios
   const userCountRef = database().ref('/PASAJERO');
 
-  // Función para obtener el número de usuarios
   const fetchUserCount = async () => {
     try {
       userCountRef.on('value', snapshot => {
@@ -49,7 +48,6 @@ export const PassengerMapScreen = () => {
     }
   };
 
-  // Función para incrementar el contador de usuarios
   const incrementUserCount = async () => {
     try {
       const currentCount = (await userCountRef.once('value')).val() || 0;
@@ -59,15 +57,46 @@ export const PassengerMapScreen = () => {
     }
   };
 
-  // Función para decrementar el contador de usuarios
   const decrementUserCount = async () => {
     try {
       const currentCount = (await userCountRef.once('value')).val() || 0;
-      userCountRef.set(Math.max(currentCount - 1, 0)); // Para evitar números negativos
+      userCountRef.set(Math.max(currentCount - 1, 0));
     } catch (error) {
       console.error('Error al decrementar el contador de usuarios:', error);
     }
   };
+
+  const resetUserCount = async () => {
+    try {
+      const currentCount = (await userCountRef.once('value')).val() || 0;
+      if (currentCount > 0) {
+        userCountRef.set(0);
+      }
+    } catch (error) {
+      console.error('Error al resetear el contador de usuarios:', error);
+    }
+  };
+
+  const checkResetTime = () => {
+    const resetHour = 3;
+    const resetMinute = 0;
+
+    const currentDate = new Date();
+    const currentHour = currentDate.getHours();
+    const currentMinute = currentDate.getMinutes();
+
+    if (currentHour === resetHour && currentMinute === resetMinute) {
+      resetUserCount();
+    }
+  };
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      checkResetTime();
+    }, 60000);
+
+    return () => clearInterval(intervalId);
+  }, []);
 
   const fetchTrufiLocation = async () => {
     try {
@@ -98,6 +127,13 @@ export const PassengerMapScreen = () => {
               );
             }
           }
+        });
+
+        // Escuchar cambios en el campo cambio_ruta
+        const routeChangeRef = database().ref(`/TRUFI/${plate}/cambio_ruta`);
+        routeChangeRef.on('value', snapshot => {
+          const cambioRuta = snapshot.val();
+          setChangeRoute(cambioRuta === true); // Actualizar el estado si hay un cambio de ruta
         });
       }
     } catch (error) {
@@ -160,16 +196,12 @@ export const PassengerMapScreen = () => {
   };
 
   useEffect(() => {
-    // Incrementar el contador de usuarios cuando la pantalla se monta
     incrementUserCount();
-
-    // Llamar a las funciones existentes
     fetchTrufiLocation();
     fetchDriverName();
     fetchBusCount();
     fetchUserCount();
 
-    // Limpiar el contador cuando el componente se desmonte
     return () => {
       decrementUserCount();
     };
@@ -200,14 +232,11 @@ export const PassengerMapScreen = () => {
                   longitudeDelta: 0.0121,
                 }
           }>
-          {/* Polyline de la ruta */}
           <Polyline
             coordinates={routePath}
             strokeColor="#FF5733"
             strokeWidth={4}
           />
-
-          {/* Dirección y cálculo de tiempo */}
           {trufiLocation && (
             <MapViewDirections
               origin={trufiLocation}
@@ -217,26 +246,8 @@ export const PassengerMapScreen = () => {
               strokeColor="blue"
               onReady={result => {
                 console.log('Tiempo estimado:', result.duration);
-                const timeInSeconds = Math.round(result.duration * 60); // Convertir minutos a segundos
+                const timeInSeconds = Math.round(result.duration * 60);
                 setTravelTime(timeInSeconds);
-
-                // Actualiza el tiempo en Firebase para el Trufi correspondiente
-                if (driverPlate) {
-                  const trufiRef = database().ref(`/TRUFI/${driverPlate}`);
-                  trufiRef
-                    .update({
-                      tiempo: timeInSeconds, // Actualizar el campo "tiempo"
-                    })
-                    .then(() => {
-                      console.log('Tiempo actualizado en Firebase');
-                    })
-                    .catch(error => {
-                      console.error(
-                        'Error al actualizar el tiempo en Firebase:',
-                        error,
-                      );
-                    });
-                }
               }}
               onError={errorMessage => {
                 console.error('Error con Directions API:', errorMessage);
@@ -244,7 +255,6 @@ export const PassengerMapScreen = () => {
             />
           )}
 
-          {/* Marcador de la ubicación del Trufi */}
           {trufiLocation && (
             <Marker
               coordinate={trufiLocation}
@@ -253,9 +263,22 @@ export const PassengerMapScreen = () => {
             </Marker>
           )}
 
-          {/* Marcador de destino */}
           <Marker coordinate={destination} title="Destino" />
         </MapView>
+
+        {/* Mostrar notificación de cambio de ruta */}
+        {changeRoute && (
+          <View
+            style={tw`absolute top-20 left-0 right-0 flex justify-center items-center`}>
+            <View
+              style={tw`bg-red-600 bg-opacity-70 p-3 items-center rounded-lg w-[95%]`}>
+              <Text style={tw`text-white text-lg font-bold text-center`}>
+                ¡Atención! El trufi ha cambiado de ruta. Esté atento a la
+                navegación.
+              </Text>
+            </View>
+          </View>
+        )}
 
         <TouchableOpacity
           style={[
@@ -269,7 +292,7 @@ export const PassengerMapScreen = () => {
           <CustomFooter
             plate={driverPlate}
             name={driverName}
-            time={travelTime} // Mostrar tiempo dinámico
+            time={travelTime}
             busCount={busCount}
           />
         </View>

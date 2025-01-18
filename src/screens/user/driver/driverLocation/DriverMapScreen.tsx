@@ -17,6 +17,7 @@ import Bus from 'assets/icons/home/bus.svg';
 import Location from 'assets/icons/home/location.svg';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import database from '@react-native-firebase/database';
+import MapViewDirections from 'react-native-maps-directions';
 
 export const DriverMapScreen = () => {
   const mapRef = useRef(null);
@@ -31,6 +32,27 @@ export const DriverMapScreen = () => {
   const watchId = useRef<number | null>(null);
   const [driverName, setDriverName] = useState('');
   const [userCount, setUserCount] = useState(0); // Estado para la cantidad de pasajeros
+  const destination = {
+    latitude: -17.39978814240143,
+    longitude: -66.14228137977041,
+  };
+  const GOOGLE_MAPS_APIKEY = 'AIzaSyAfctC8adBPlAm9I-jaH0kJNTnzEhKqMa0';
+
+  const updateTimeInFirebase = timeInSeconds => {
+    if (driverPlate) {
+      const trufiRef = database().ref(`/TRUFI/${driverPlate}`);
+      trufiRef
+        .update({
+          tiempo: timeInSeconds, // Actualizar el campo "tiempo"
+        })
+        .then(() => {
+          console.log('Tiempo actualizado en Firebase');
+        })
+        .catch(error => {
+          console.error('Error al actualizar el tiempo en Firebase:', error);
+        });
+    }
+  };
 
   const fetchDriverName = async () => {
     if (!driverCI) {
@@ -51,24 +73,20 @@ export const DriverMapScreen = () => {
     }
   };
 
-  // Recuperar y escuchar la cantidad de pasajeros en tiempo real
   const listenPassengerCount = () => {
     if (!driverPlate) {
       return;
     }
 
     const passengerRef = database().ref('/PASAJERO');
-
-    // Escuchar los cambios en la cantidad de pasajeros
     passengerRef.on('value', snapshot => {
       if (snapshot.exists()) {
         setUserCount(snapshot.val());
       } else {
-        setUserCount(0); // Si no hay datos, poner el conteo en 0
+        setUserCount(0);
       }
     });
 
-    // Limpiar el listener cuando el componente se desmonte
     return () => {
       passengerRef.off();
     };
@@ -87,10 +105,8 @@ export const DriverMapScreen = () => {
       const locationRef = database().ref(
         `/TRUFI/${driverPlate}/ubicacion_actual`,
       );
-
       locationRef.set({latitude, longitude});
-      locationRef.onDisconnect().set({latitude, longitude}); // Mantener ubicación aunque se pierda la conexión
-
+      locationRef.onDisconnect().set({latitude, longitude});
       console.log(`Ubicación actualizada para ${driverPlate}:`, {
         latitude,
         longitude,
@@ -104,7 +120,7 @@ export const DriverMapScreen = () => {
     Geolocation.getCurrentPosition(
       position => {
         const {latitude, longitude} = position.coords;
-        updateLocationInDatabase(latitude, longitude); // Actualizar en Firebase
+        updateLocationInDatabase(latitude, longitude);
         setLocation({
           latitude,
           longitude,
@@ -113,12 +129,7 @@ export const DriverMapScreen = () => {
         });
         if (mapRef.current) {
           mapRef.current.animateToRegion(
-            {
-              latitude,
-              longitude,
-              latitudeDelta: 0.003,
-              longitudeDelta: 0.003,
-            },
+            {latitude, longitude, latitudeDelta: 0.003, longitudeDelta: 0.003},
             1000,
           );
         }
@@ -162,7 +173,7 @@ export const DriverMapScreen = () => {
       position => {
         const {latitude, longitude} = position.coords;
         console.log('Ubicación capturada:', {latitude, longitude});
-        updateLocationInDatabase(latitude, longitude); // Actualizar en Firebase
+        updateLocationInDatabase(latitude, longitude);
         setLocation(prev => ({
           ...prev,
           latitude,
@@ -206,7 +217,6 @@ export const DriverMapScreen = () => {
     getDriverData();
     requestLocationPermission();
 
-    // Empezar a escuchar la cantidad de pasajeros
     listenPassengerCount();
 
     return () => {
@@ -234,7 +244,28 @@ export const DriverMapScreen = () => {
             title="Ubicación Actual">
             <Bus width={50} height={50} />
           </Marker>
+          {location && destination && (
+            <MapViewDirections
+              origin={{
+                latitude: location.latitude,
+                longitude: location.longitude,
+              }}
+              destination={destination}
+              apikey={GOOGLE_MAPS_APIKEY}
+              strokeWidth={4}
+              strokeColor="blue"
+              onReady={result => {
+                console.log('Tiempo estimado en minutos:', result.duration);
+                const timeInSeconds = Math.round(result.duration * 60); // Convertir minutos a segundos
+                updateTimeInFirebase(timeInSeconds); // Actualizar en Firebase en segundos
+              }}
+              onError={errorMessage => {
+                console.error('Error con Directions API:', errorMessage);
+              }}
+            />
+          )}
         </MapView>
+
         <TouchableOpacity
           style={[
             tw`absolute bottom-25 right-4 bg-[#222936] bg-opacity-50 p-2 rounded-full`,
@@ -242,6 +273,7 @@ export const DriverMapScreen = () => {
           onPress={getUsersCurrentLocation}>
           <Location width={35} height={35} />
         </TouchableOpacity>
+
         <View style={tw`absolute bottom-0 left-0 right-0`}>
           <CustomFooter
             plate={driverPlate}

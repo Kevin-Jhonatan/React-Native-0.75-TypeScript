@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {HomeScreen} from '../screens/home/HomeScreen';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {PassengerMapScreen} from 'screens/user/passenger/PassengerMapScreen';
@@ -34,7 +34,7 @@ export const Navigator = () => {
 
   // Función para actualizar el conteo de conductores
   const updateDriverCount = async () => {
-    const count = await <CountDriver />;
+    const count = await (<CountDriver />);
     setDriverCount(count); // Establece el conteo de conductores
   };
 
@@ -72,8 +72,9 @@ export const Navigator = () => {
       <Stack.Screen
         name="RegisterDriver"
         component={RegisterScreen}
-        options={({ navigation }) => ({
-          header: () => renderHeader(navigation, 'CONDUCTOR', false, false, driverCount),
+        options={({navigation}) => ({
+          header: () =>
+            renderHeader(navigation, 'CONDUCTOR', false, false, driverCount),
           headerTransparent: true,
         })}
       />
@@ -99,7 +100,8 @@ export const Navigator = () => {
         name="ListBus"
         component={ListBusScreen}
         options={({navigation}) => ({
-          header: () => renderHeader(navigation, 'BUSCAR - TRUFI', false, false),
+          header: () =>
+            renderHeader(navigation, 'BUSCAR - TRUFI', false, false),
           headerTransparent: true,
         })}
       />
@@ -107,7 +109,7 @@ export const Navigator = () => {
         name="GetDriverLocationMap"
         component={PassengerMapScreen}
         options={({navigation}) => ({
-          header: () => renderHeader(navigation, 'PASAJERO', true),
+          header: () => renderHeader(navigation, 'PASAJERO', false, false),
           headerTransparent: true,
         })}
       />
