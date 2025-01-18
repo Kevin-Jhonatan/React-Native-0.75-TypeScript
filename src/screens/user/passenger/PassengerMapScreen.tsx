@@ -4,7 +4,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import tw from 'twrnc';
 import styles from '../../../styles/global.style';
 import CustomFooter from 'components/CustomFooter';
-import MapView, {Marker, PROVIDER_GOOGLE, Polyline} from 'react-native-maps';
+import MapView, {Marker, PROVIDER_GOOGLE} from 'react-native-maps';
 import MapViewDirections from 'react-native-maps-directions';
 import Bus from 'assets/icons/home/bus.svg';
 import Location from 'assets/icons/home/location.svg';
@@ -20,9 +20,6 @@ export const PassengerMapScreen = () => {
 
   const [driverPlate, setDriverPlate] = useState('');
   const [driverName, setDriverName] = useState('');
-  const [routePath, setRoutePath] = useState<
-    {latitude: number; longitude: number}[]
-  >([]);
   const [busCount, setBusCount] = useState(0);
   const [travelTime, setTravelTime] = useState(0);
   const [userCount, setUserCount] = useState(0);
@@ -114,8 +111,6 @@ export const PassengerMapScreen = () => {
             };
 
             setTrufiLocation(currentLocation);
-            setRoutePath(prevPath => [...prevPath, currentLocation]);
-
             if (mapRef.current) {
               mapRef.current.animateToRegion(
                 {
@@ -232,11 +227,6 @@ export const PassengerMapScreen = () => {
                   longitudeDelta: 0.0121,
                 }
           }>
-          <Polyline
-            coordinates={routePath}
-            strokeColor="#FF5733"
-            strokeWidth={4}
-          />
           {trufiLocation && (
             <MapViewDirections
               origin={trufiLocation}
