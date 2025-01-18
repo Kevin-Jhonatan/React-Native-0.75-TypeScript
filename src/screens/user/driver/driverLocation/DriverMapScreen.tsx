@@ -30,6 +30,7 @@ export const DriverMapScreen = () => {
   const [driverPlate, setDriverPlate] = useState('');
   const watchId = useRef<number | null>(null);
   const [driverName, setDriverName] = useState('');
+  const [userCount, setUserCount] = useState(0); // Estado para la cantidad de pasajeros
 
   const fetchDriverName = async () => {
     if (!driverCI) {
@@ -50,6 +51,29 @@ export const DriverMapScreen = () => {
     }
   };
 
+  // Recuperar y escuchar la cantidad de pasajeros en tiempo real
+  const listenPassengerCount = () => {
+    if (!driverPlate) {
+      return;
+    }
+
+    const passengerRef = database().ref('/PASAJERO');
+
+    // Escuchar los cambios en la cantidad de pasajeros
+    passengerRef.on('value', snapshot => {
+      if (snapshot.exists()) {
+        setUserCount(snapshot.val());
+      } else {
+        setUserCount(0); // Si no hay datos, poner el conteo en 0
+      }
+    });
+
+    // Limpiar el listener cuando el componente se desmonte
+    return () => {
+      passengerRef.off();
+    };
+  };
+
   const updateLocationInDatabase = async (
     latitude: number,
     longitude: number,
@@ -64,7 +88,6 @@ export const DriverMapScreen = () => {
         `/TRUFI/${driverPlate}/ubicacion_actual`,
       );
 
-      // Usar onDisconnect para mantener la última ubicación
       locationRef.set({latitude, longitude});
       locationRef.onDisconnect().set({latitude, longitude}); // Mantener ubicación aunque se pierda la conexión
 
@@ -77,7 +100,6 @@ export const DriverMapScreen = () => {
     }
   };
 
-  // Obtener la ubicación del usuario y actualizar en Firebase
   const getUsersCurrentLocation = () => {
     Geolocation.getCurrentPosition(
       position => {
@@ -108,7 +130,6 @@ export const DriverMapScreen = () => {
     );
   };
 
-  // Solicitar permiso de ubicación
   const requestLocationPermission = async () => {
     if (Platform.OS === 'android') {
       try {
@@ -117,7 +138,7 @@ export const DriverMapScreen = () => {
         );
         if (granted === PermissionsAndroid.RESULTS.GRANTED) {
           console.log('Permiso concedido');
-          startTracking(); // Iniciar el rastreo de ubicación
+          startTracking();
         } else {
           Alert.alert('Permiso denegado', 'No se puede acceder a la ubicación');
         }
@@ -125,12 +146,10 @@ export const DriverMapScreen = () => {
         console.warn(error);
       }
     } else {
-      // Si es iOS, no es necesario pedir el permiso manualmente en este caso
       startTracking();
     }
   };
 
-  // Iniciar el rastreo de ubicación en tiempo real
   const startTracking = () => {
     if (!driverPlate) {
       console.log(
@@ -153,11 +172,10 @@ export const DriverMapScreen = () => {
       error => {
         console.log('Error al rastrear ubicación:', error);
       },
-      {enableHighAccuracy: true, distanceFilter: 2}, // Actualizar cada 2 metros
+      {enableHighAccuracy: true, distanceFilter: 2},
     );
   };
 
-  // Detener el rastreo de ubicación
   const stopTracking = () => {
     if (watchId.current !== null) {
       Geolocation.clearWatch(watchId.current);
@@ -186,12 +204,15 @@ export const DriverMapScreen = () => {
     };
 
     getDriverData();
-    requestLocationPermission(); // Pedir permiso de ubicación
+    requestLocationPermission();
+
+    // Empezar a escuchar la cantidad de pasajeros
+    listenPassengerCount();
 
     return () => {
-      stopTracking(); // Detener el seguimiento al desmontar el componente
+      stopTracking();
     };
-  }, [driverCI, driverPlate]); // Recalcular cada vez que el CI o la placa cambien
+  }, [driverCI, driverPlate]);
 
   return (
     <SafeAreaView style={[tw`flex-1`, styles.container]}>
@@ -222,7 +243,11 @@ export const DriverMapScreen = () => {
           <Location width={35} height={35} />
         </TouchableOpacity>
         <View style={tw`absolute bottom-0 left-0 right-0`}>
-          <CustomFooter plate={driverPlate} name={driverName} userCount={5} />
+          <CustomFooter
+            plate={driverPlate}
+            name={driverName}
+            userCount={userCount}
+          />
         </View>
       </View>
     </SafeAreaView>

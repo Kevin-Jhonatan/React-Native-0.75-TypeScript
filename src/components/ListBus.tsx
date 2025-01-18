@@ -26,6 +26,7 @@ const ListBus = ({navigation, refreshing}: any) => {
           placa: busesData[key].placa,
           ubicacion: busesData[key].ubicacion_actual,
           conductorCI: busesData[key].conductor_ci,
+          tiempo: busesData[key].tiempo || 0, // Aseguramos que el campo tiempo tenga un valor por defecto
         }));
 
         setBuses(busesList);
@@ -38,9 +39,35 @@ const ListBus = ({navigation, refreshing}: any) => {
     }
   };
 
+  // Función para escuchar cambios en tiempo real
+  const listenForBusUpdates = () => {
+    const busRef = database()
+      .ref('/TRUFI')
+      .orderByChild('servicio')
+      .equalTo(true);
+
+    busRef.on('child_changed', snapshot => {
+      const updatedBus = snapshot.val();
+      setBuses(prevBuses =>
+        prevBuses.map(bus =>
+          bus.id === snapshot.key
+            ? {...bus, tiempo: updatedBus.tiempo || bus.tiempo}
+            : bus,
+        ),
+      );
+    });
+  };
+
   // Llamar a la función al montar el componente o al refrescar
   useEffect(() => {
     fetchBuses();
+    listenForBusUpdates(); // Escuchar los cambios de los buses
+
+    // Cleanup listener al desmontar el componente
+    return () => {
+      const busRef = database().ref('/TRUFI');
+      busRef.off('child_changed');
+    };
   }, [refreshing]);
 
   // Función para manejar la selección de un bus
@@ -74,7 +101,7 @@ const ListBus = ({navigation, refreshing}: any) => {
             key={index}
             lineNumber={bus.numeroTrufi}
             plate={bus.id}
-            time={10000}
+            time={parseInt(bus.tiempo, 10) || 0} // Aseguramos que el valor de tiempo sea un número
             onPress={() => handleBusSelection(bus)}
           />
         ))

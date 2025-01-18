@@ -25,6 +25,7 @@ export const PassengerMapScreen = () => {
   >([]);
   const [busCount, setBusCount] = useState(0);
   const [travelTime, setTravelTime] = useState(0); // Estado para el tiempo estimado
+  const [userCount, setUserCount] = useState(0); // Estado para contar los usuarios
 
   const destination = {
     latitude: -17.39978814240143,
@@ -32,6 +33,41 @@ export const PassengerMapScreen = () => {
   };
 
   const GOOGLE_MAPS_APIKEY = 'AIzaSyAfctC8adBPlAm9I-jaH0kJNTnzEhKqMa0';
+
+  // Referencia de Firebase para el contador de usuarios
+  const userCountRef = database().ref('/PASAJERO');
+
+  // Función para obtener el número de usuarios
+  const fetchUserCount = async () => {
+    try {
+      userCountRef.on('value', snapshot => {
+        const count = snapshot.val();
+        setUserCount(count || 0);
+      });
+    } catch (error) {
+      console.error('Error al obtener el contador de usuarios:', error);
+    }
+  };
+
+  // Función para incrementar el contador de usuarios
+  const incrementUserCount = async () => {
+    try {
+      const currentCount = (await userCountRef.once('value')).val() || 0;
+      userCountRef.set(currentCount + 1);
+    } catch (error) {
+      console.error('Error al incrementar el contador de usuarios:', error);
+    }
+  };
+
+  // Función para decrementar el contador de usuarios
+  const decrementUserCount = async () => {
+    try {
+      const currentCount = (await userCountRef.once('value')).val() || 0;
+      userCountRef.set(Math.max(currentCount - 1, 0)); // Para evitar números negativos
+    } catch (error) {
+      console.error('Error al decrementar el contador de usuarios:', error);
+    }
+  };
 
   const fetchTrufiLocation = async () => {
     try {
@@ -76,7 +112,9 @@ export const PassengerMapScreen = () => {
         const driverRef = database().ref(`/CONDUCTOR/${ci}/nombre`);
         driverRef.once('value').then(snapshot => {
           const name = snapshot.val();
-          if (name) setDriverName(name);
+          if (name) {
+            setDriverName(name);
+          }
         });
       }
     } catch (error) {
@@ -122,9 +160,19 @@ export const PassengerMapScreen = () => {
   };
 
   useEffect(() => {
+    // Incrementar el contador de usuarios cuando la pantalla se monta
+    incrementUserCount();
+
+    // Llamar a las funciones existentes
     fetchTrufiLocation();
     fetchDriverName();
     fetchBusCount();
+    fetchUserCount();
+
+    // Limpiar el contador cuando el componente se desmonte
+    return () => {
+      decrementUserCount();
+    };
   }, []);
 
   return (
@@ -169,7 +217,26 @@ export const PassengerMapScreen = () => {
               strokeColor="blue"
               onReady={result => {
                 console.log('Tiempo estimado:', result.duration);
-                setTravelTime(Math.round(result.duration * 60)); // Convertir minutos a segundos
+                const timeInSeconds = Math.round(result.duration * 60); // Convertir minutos a segundos
+                setTravelTime(timeInSeconds);
+
+                // Actualiza el tiempo en Firebase para el Trufi correspondiente
+                if (driverPlate) {
+                  const trufiRef = database().ref(`/TRUFI/${driverPlate}`);
+                  trufiRef
+                    .update({
+                      tiempo: timeInSeconds, // Actualizar el campo "tiempo"
+                    })
+                    .then(() => {
+                      console.log('Tiempo actualizado en Firebase');
+                    })
+                    .catch(error => {
+                      console.error(
+                        'Error al actualizar el tiempo en Firebase:',
+                        error,
+                      );
+                    });
+                }
               }}
               onError={errorMessage => {
                 console.error('Error con Directions API:', errorMessage);

@@ -38,7 +38,7 @@ export const ListBusScreen = ({navigation}: any) => {
             style={[
               tw`text-lg font-bold text-center mb-4 uppercase text-white`,
             ]}>
-            Deslice hacia abajo para recargar los trufis disponibles.
+            Deslice abajo para actualizar los trufis disponibles.
           </Text>
           <ListBus navigation={navigation} refreshing={refreshing} />
         </View>
