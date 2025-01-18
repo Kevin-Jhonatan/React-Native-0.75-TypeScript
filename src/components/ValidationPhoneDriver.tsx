@@ -4,8 +4,8 @@ import auth from '@react-native-firebase/auth';
 import tw from 'twrnc';
 import styles from '../styles/global.style';
 import InputWithIcon from '../components/Input';
-import PhoneIcon from '../assets/icons/home/busBlack.svg';
-import CodeIcon from '../assets/icons/home/ci.svg';
+import PhoneBlack from '../assets/icons/home/phone-black.svg';
+import CodeIcon from '../assets/icons/home/message-black.svg';
 
 const ValidationPhoneDriver = ({navigation}: any) => {
   const [phoneNumber, setPhoneNumber] = useState('+591'); // Número de teléfono inicial con código de país
@@ -20,7 +20,7 @@ const ValidationPhoneDriver = ({navigation}: any) => {
         console.log('Usuario autenticado:', user);
         Alert.alert(
           'Autenticación exitosa',
-          'Has iniciado sesión correctamente.',
+          'Validación de socio correctamente.',
         );
         // Redirigir después de autenticación exitosa
         navigation.navigate('RegisterDriver');
@@ -31,6 +31,11 @@ const ValidationPhoneDriver = ({navigation}: any) => {
   }, [navigation]);
 
   const signInWithPhoneNumber = async (phoneNumber: string) => {
+    if (!phoneNumber || phoneNumber.length < 10) {
+      Alert.alert('Error', 'Por favor ingrese un número de teléfono válido.');
+      return;
+    }
+
     setLoading(true); // Activar el loader
     try {
       console.log('Enviando código al número:', phoneNumber);
@@ -57,6 +62,11 @@ const ValidationPhoneDriver = ({navigation}: any) => {
       return;
     }
 
+    if (!code || code.length !== 6) {
+      Alert.alert('Error', 'El código debe tener 6 dígitos.');
+      return;
+    }
+
     setConfirming(true); // Activar el estado de confirmación
     try {
       console.log('Confirmando código:', code);
@@ -75,15 +85,21 @@ const ValidationPhoneDriver = ({navigation}: any) => {
   return (
     <View style={[tw`bg-white flex-1 justify-center p-8`, styles.border]}>
       <Text style={tw`font-bold text-lg text-center uppercase text-black`}>
-        {confirm ? 'Ingresa el Código de SMS' : 'Iniciar Sesión'}
+        {confirm ? 'Ingresa el Código de SMS' : 'Validacion de socio'}
       </Text>
 
       {!confirm ? (
         <InputWithIcon
           value={phoneNumber}
-          onChangeText={setPhoneNumber}
+          onChangeText={text => {
+            if (!text.startsWith('+591')) {
+              setPhoneNumber('+591');
+            } else {
+              setPhoneNumber(text);
+            }
+          }}
           placeholder="+591XXXXXXXX"
-          iconComponent={<PhoneIcon width={25} height={25} style={tw`ml-2`} />}
+          iconComponent={<PhoneBlack width={25} height={25} style={tw`ml-2`} />}
           inputType="number"
           autoCapitalize="characters"
           autoCorrect={false}

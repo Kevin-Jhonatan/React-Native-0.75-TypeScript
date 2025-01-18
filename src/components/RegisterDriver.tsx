@@ -2,7 +2,7 @@ import React from 'react';
 import tw from 'twrnc';
 import UserIcon from '../assets/icons/home/userIcon.svg';
 import Ci from '../assets/icons/home/ci.svg';
-import EmailIcon from '../assets/icons/home/bus.svg';
+import EmailIcon from '../assets/icons/home/email-black.svg';
 import {View, Text, TouchableOpacity, Alert} from 'react-native';
 import database from '@react-native-firebase/database';
 import styles from '../styles/global.style';
@@ -16,7 +16,7 @@ export const RegisterDriver = ({navigation}: any) => {
   const [loading, setLoading] = React.useState(false); // Estado para el loader
 
   const saveDrive = async () => {
-    if (!email || !name || !lastName || !ci) {
+    if (!name || !lastName || !ci) {
       Alert.alert('Error', 'Por favor, complete todos los campos.');
       return;
     }
@@ -65,14 +65,14 @@ export const RegisterDriver = ({navigation}: any) => {
   return (
     <View style={[tw`bg-white flex-1 justify-center p-8`, styles.border]}>
       <Text style={tw`font-bold text-lg text-center uppercase text-black`}>
-        Registro
+        Registro de Conductor
       </Text>
 
       <View style={tw`flex-row items-center`}>
         <InputWithIcon
           value={ci}
           onChangeText={setCI}
-          placeholder="C.I."
+          placeholder="Cédula de identidad"
           inputStyle="uppercase"
           iconComponent={
             <Ci width={25} height={25} style={tw`ml-2`} fill={'black'} />
@@ -120,10 +120,12 @@ export const RegisterDriver = ({navigation}: any) => {
           placeholder="CORREO ELECTRÓNICO"
           inputType="email"
           iconComponent={<EmailIcon width={25} height={25} style={tw`ml-2`} />}
-          autoCapitalize="characters"
+          autoCapitalize="none"
           autoCorrect={false}
           maxLength={40}
           inputStyle="lowercase"
+          autoCompleteType="off"
+          keyboardType="email-address"
         />
       </View>
 

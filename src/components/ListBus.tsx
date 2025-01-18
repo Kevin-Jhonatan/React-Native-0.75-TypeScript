@@ -1,12 +1,11 @@
 import React, {useEffect, useState} from 'react';
 import {View, Text, Alert} from 'react-native';
-import CardList from 'components/cardList'; // Asegúrate de que este componente esté disponible
-
+import CardList from 'components/cardList';
 import database from '@react-native-firebase/database';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import tw from 'twrnc';
 
-// Componente ListBus que muestra los buses en servicio
-const ListBus = ({navigation}: any) => {
+const ListBus = ({navigation, refreshing}: any) => {
   const [buses, setBuses] = useState<any[]>([]);
 
   // Función para obtener los datos de los buses desde Firebase
@@ -15,28 +14,19 @@ const ListBus = ({navigation}: any) => {
       const snapshot = await database()
         .ref('/TRUFI')
         .orderByChild('servicio')
-        .equalTo(true) // Filtrar solo los buses que están en servicio
+        .equalTo(true)
         .once('value');
 
       const busesData = snapshot.val();
-      // Imprimir los datos completos para ver su estructura
-      console.log('Datos obtenidos de Firebase:', busesData);
 
       if (busesData) {
-        const busesList = Object.keys(busesData).map(key => {
-          const bus = busesData[key];
-
-          // La clave "key" es el identificador del bus
-          console.log('Bus encontrado:', bus);
-
-          return {
-            id: key, // Usamos la clave del nodo como el identificador del bus
-            numeroTrufi: bus.numero_trufi,
-            placa: bus.placa, // Si quieres mostrar otro campo
-            ubicacion: bus.ubicacion_actual,
-            conductorCI: bus.conductor_ci,
-          };
-        });
+        const busesList = Object.keys(busesData).map(key => ({
+          id: key,
+          numeroTrufi: busesData[key].numero_trufi,
+          placa: busesData[key].placa,
+          ubicacion: busesData[key].ubicacion_actual,
+          conductorCI: busesData[key].conductor_ci,
+        }));
 
         setBuses(busesList);
       } else {
@@ -48,26 +38,50 @@ const ListBus = ({navigation}: any) => {
     }
   };
 
-  // Llamar a la función al montar el componente
+  // Llamar a la función al montar el componente o al refrescar
   useEffect(() => {
     fetchBuses();
-  }, []);
+  }, [refreshing]);
+
+  // Función para manejar la selección de un bus
+  const handleBusSelection = async (bus: any) => {
+    try {
+      // Extraer únicamente la parte posterior a "/CONDUCTOR/"
+      const ci = bus.conductorCI.split('/CONDUCTOR/').pop();
+
+      // Guardar los datos en AsyncStorage
+      await AsyncStorage.setItem('driverCI', ci || '');
+      await AsyncStorage.setItem('driverPlate', bus.id);
+
+      // Mostrar los valores en consola
+      console.log('Valores seteados en AsyncStorage:');
+      console.log('driverCI:', ci);
+      console.log('driverPlate:', bus.id);
+
+      // Navegar al siguiente screen
+      navigation.navigate('GetDriverLocationMap', {bus});
+    } catch (error) {
+      console.error('Error al guardar en AsyncStorage:', error);
+      Alert.alert('Error', 'Hubo un problema al guardar los datos.');
+    }
+  };
 
   return (
     <View style={tw`mt-4`}>
-      {/* Mapeamos el listado de buses a CardList */}
       {buses.length > 0 ? (
         buses.map((bus, index) => (
           <CardList
             key={index}
             lineNumber={bus.numeroTrufi}
-            plate={bus.id} // Ahora mostramos el identificador de cada bus (clave)
-            time={10000} // Tiempo fijo por ahora
-            onPress={() => navigation.navigate('GetDriverLocationMap', {bus})}
+            plate={bus.id}
+            time={10000}
+            onPress={() => handleBusSelection(bus)}
           />
         ))
       ) : (
-        <Text>No hay buses disponibles en servicio</Text>
+        <Text style={tw`text-center`}>
+          No hay buses disponibles en servicio
+        </Text>
       )}
     </View>
   );

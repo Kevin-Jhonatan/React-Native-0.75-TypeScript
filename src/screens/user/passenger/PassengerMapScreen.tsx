@@ -1,179 +1,214 @@
 import React, {useEffect, useState, useRef} from 'react';
-import {
-  Alert,
-  PermissionsAndroid,
-  Platform,
-  StatusBar,
-  View,
-  TouchableOpacity,
-} from 'react-native';
+import {Alert, StatusBar, View, TouchableOpacity} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import tw from 'twrnc';
 import styles from '../../../styles/global.style';
 import CustomFooter from 'components/CustomFooter';
-import Geolocation from '@react-native-community/geolocation';
-import MapView, {Marker, PROVIDER_GOOGLE} from 'react-native-maps';
+import MapView, {Marker, PROVIDER_GOOGLE, Polyline} from 'react-native-maps';
 import MapViewDirections from 'react-native-maps-directions';
 import Bus from 'assets/icons/home/bus.svg';
 import Location from 'assets/icons/home/location.svg';
-
-const GOOGLE_MAPS_APIKEY = 'AIzaSyAfctC8adBPlAm9I-jaH0kJNTnzEhKqMa0';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import database from '@react-native-firebase/database';
 
 export const PassengerMapScreen = () => {
   const mapRef = useRef(null);
-  const [location, setLocation] = useState({
-    latitude: -17.338151,
-    longitude: -66.265726,
-    latitudeDelta: 0.015,
-    longitudeDelta: 0.0121,
-  });
+  const [trufiLocation, setTrufiLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
 
-  const [duration, setDuration] = useState(0);
-
-  const origin = {
-    latitude: -17.338552892340243,
-    longitude: -66.26542967194706,
-  };
+  const [driverPlate, setDriverPlate] = useState('');
+  const [driverName, setDriverName] = useState('');
+  const [routePath, setRoutePath] = useState<
+    {latitude: number; longitude: number}[]
+  >([]);
+  const [busCount, setBusCount] = useState(0);
+  const [travelTime, setTravelTime] = useState(0); // Estado para el tiempo estimado
 
   const destination = {
     latitude: -17.39978814240143,
     longitude: -66.14228137977041,
   };
 
-  const waypoints = [
-    {latitude: -17.349325, longitude: -66.257205},
-    {latitude: -17.39107676884926, longitude: -66.25080724762616},
-    {latitude: -17.39388, longitude: -66.174089},
-    {latitude: -17.394047, longitude: -66.17075},
-    {latitude: -17.393026, longitude: -66.161082},
-    {latitude: -17.399382486699547, longitude: -66.16044390689545},
-    {latitude: -17.39714245915778, longitude: -66.145297195534},
-    {latitude: -17.39814994910454, longitude: -66.13992678007511},
-  ];
+  const GOOGLE_MAPS_APIKEY = 'AIzaSyAfctC8adBPlAm9I-jaH0kJNTnzEhKqMa0';
 
-  const getUsersCurrentLocation = () => {
-    Geolocation.getCurrentPosition(
-      position => {
-        console.log('Ubicación actual:', position);
-        const {latitude, longitude} = position.coords;
-        if (latitude && longitude) {
-          setLocation({
-            latitude: latitude,
-            longitude: longitude,
-            latitudeDelta: 0.003,
-            longitudeDelta: 0.003,
-          });
-          // Mover la cámara a la ubicación actual
-          if (mapRef.current) {
-            mapRef.current.animateToRegion(
-              {
-                latitude: latitude,
-                longitude: longitude,
-                latitudeDelta: 0.003,
-                longitudeDelta: 0.003,
-              },
-              1000,
-            );
+  const fetchTrufiLocation = async () => {
+    try {
+      const plate = await AsyncStorage.getItem('driverPlate');
+      if (plate && typeof plate === 'string' && plate.trim() !== '') {
+        setDriverPlate(plate);
+
+        const locationRef = database().ref(`/TRUFI/${plate}/ubicacion_actual`);
+        locationRef.on('value', snapshot => {
+          const data = snapshot.val();
+          if (data?.latitude && data?.longitude) {
+            const currentLocation = {
+              latitude: data.latitude,
+              longitude: data.longitude,
+            };
+
+            setTrufiLocation(currentLocation);
+            setRoutePath(prevPath => [...prevPath, currentLocation]);
+
+            if (mapRef.current) {
+              mapRef.current.animateToRegion(
+                {
+                  ...currentLocation,
+                  latitudeDelta: 0.002,
+                  longitudeDelta: 0.002,
+                },
+                1000,
+              );
+            }
           }
-        } else {
-          console.log('Error en las coordenadas');
-        }
-      },
-      error => {
-        console.log(error.code, error.message);
-      },
-      {enableHighAccuracy: true, timeout: 10000, maximumAge: 10000},
-    );
+        });
+      }
+    } catch (error) {
+      console.error('Error al obtener la ubicación de Firebase:', error);
+    }
   };
 
-  const requestLocationPermission = async () => {
-    if (Platform.OS === 'android') {
-      try {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-        );
-        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-          console.log('Permiso concedido');
-          getUsersCurrentLocation();
-        } else {
-          Alert.alert('Permiso denegado', 'No se puede acceder a la ubicación');
-        }
-      } catch (error) {
-        console.warn(error);
+  const fetchDriverName = async () => {
+    try {
+      const ci = await AsyncStorage.getItem('driverCI');
+      if (ci && typeof ci === 'string' && ci.trim() !== '') {
+        const driverRef = database().ref(`/CONDUCTOR/${ci}/nombre`);
+        driverRef.once('value').then(snapshot => {
+          const name = snapshot.val();
+          if (name) setDriverName(name);
+        });
       }
+    } catch (error) {
+      console.error('Error al obtener el nombre del conductor:', error);
+    }
+  };
+
+  const fetchBusCount = async () => {
+    try {
+      const trufiRef = database().ref('/TRUFI');
+      trufiRef.on('value', snapshot => {
+        const data = snapshot.val();
+        if (data) {
+          const activeTrufis = Object.values(data).filter(
+            (trufi: any) => trufi.servicio === true,
+          );
+          setBusCount(activeTrufis.length);
+        } else {
+          setBusCount(0);
+        }
+      });
+    } catch (error) {
+      console.error('Error al contar los Trufis en servicio:', error);
+    }
+  };
+
+  const handleCenterLocation = () => {
+    if (trufiLocation && mapRef.current) {
+      mapRef.current.animateToRegion(
+        {
+          ...trufiLocation,
+          latitudeDelta: 0.002,
+          longitudeDelta: 0.002,
+        },
+        1000,
+      );
+    } else {
+      Alert.alert(
+        'Ubicación no disponible',
+        'No se ha cargado la ubicación del Trufi.',
+      );
     }
   };
 
   useEffect(() => {
-    requestLocationPermission();
+    fetchTrufiLocation();
+    fetchDriverName();
+    fetchBusCount();
   }, []);
 
   return (
     <SafeAreaView style={[tw`flex-1`, styles.container]}>
-      {<StatusBar hidden={false} />}
+      <StatusBar hidden={false} />
       <View style={tw`flex-1 relative`}>
         <MapView
           ref={mapRef}
           provider={PROVIDER_GOOGLE}
           style={{flex: 1}}
-          region={location}
-          showsUserLocation={true}
-          followsUserLocation={true}
-          showsMyLocationButton={false}
-          onRegionChangeComplete={region => console.log('Region:', region)}>
-          {/* Marcador del origen */}
-          <Marker coordinate={origin} title="Punto A" />
-
-          {/* Marcador del destino */}
-          <Marker coordinate={destination} title="Punto B" />
-
-          {/* Marcador de la ubicación actual */}
-          <Marker
-            coordinate={{
-              latitude: location.latitude,
-              longitude: location.longitude,
-            }}
-            title="Ubicación Actual">
-            <Bus width={50} height={50} />
-          </Marker>
-
-          {/* Direcciones con waypoints */}
-          <MapViewDirections
-            origin={origin}
-            destination={destination}
-            waypoints={waypoints}
-            apikey={GOOGLE_MAPS_APIKEY}
-            strokeWidth={6}
-            strokeColor="blue"
-            onReady={result => {
-              setDuration(Math.round(result.duration * 60));
-              console.log(`Distancia: ${result.distance} km`);
-              console.log(`Duración: ${result.duration} min`);
-            }}
-            onError={errorMessage => {
-              console.log('Error:', errorMessage);
-            }}
+          showsScale={true}
+          showsTraffic={true}
+          showsBuildings={true}
+          region={
+            trufiLocation
+              ? {
+                  ...trufiLocation,
+                  latitudeDelta: 0.002,
+                  longitudeDelta: 0.002,
+                }
+              : {
+                  latitude: -17.338151,
+                  longitude: -66.265726,
+                  latitudeDelta: 0.015,
+                  longitudeDelta: 0.0121,
+                }
+          }>
+          {/* Polyline de la ruta */}
+          <Polyline
+            coordinates={routePath}
+            strokeColor="#FF5733"
+            strokeWidth={4}
           />
+
+          {/* Dirección y cálculo de tiempo */}
+          {trufiLocation && (
+            <MapViewDirections
+              origin={trufiLocation}
+              destination={destination}
+              apikey={GOOGLE_MAPS_APIKEY}
+              strokeWidth={4}
+              strokeColor="blue"
+              onReady={result => {
+                console.log('Tiempo estimado:', result.duration);
+                setTravelTime(Math.round(result.duration * 60)); // Convertir minutos a segundos
+              }}
+              onError={errorMessage => {
+                console.error('Error con Directions API:', errorMessage);
+              }}
+            />
+          )}
+
+          {/* Marcador de la ubicación del Trufi */}
+          {trufiLocation && (
+            <Marker
+              coordinate={trufiLocation}
+              title="Ubicación Actual del Trufi">
+              <Bus width={50} height={50} />
+            </Marker>
+          )}
+
+          {/* Marcador de destino */}
+          <Marker coordinate={destination} title="Destino" />
         </MapView>
 
-        {/* Botón personalizado para centrar en la ubicación actual */}
         <TouchableOpacity
           style={[
-            tw`absolute bottom-25 right-4 bg-[#222936] bg-opacity-50 p-2 rounded-full `,
+            tw`absolute bottom-25 right-4 bg-[#222936] bg-opacity-50 p-2 rounded-full`,
           ]}
-          onPress={getUsersCurrentLocation}>
+          onPress={handleCenterLocation}>
           <Location width={35} height={35} />
         </TouchableOpacity>
 
         <View style={tw`absolute bottom-0 left-0 right-0`}>
           <CustomFooter
-            plate="ABC-1234"
-            name="Kevin Jhonatan"
-            time={duration}
-            busCount={13}
+            plate={driverPlate}
+            name={driverName}
+            time={travelTime} // Mostrar tiempo dinámico
+            busCount={busCount}
           />
         </View>
       </View>
     </SafeAreaView>
   );
 };
+
+export default PassengerMapScreen;

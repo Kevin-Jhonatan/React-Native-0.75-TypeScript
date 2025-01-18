@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {HomeScreen} from '../screens/home/HomeScreen';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {PassengerMapScreen} from 'screens/user/passenger/PassengerMapScreen';
@@ -9,6 +9,7 @@ import {ListBusScreen} from 'screens/user/passenger/ListBusScreen';
 import {DriverValidationScreen} from 'screens/user/driver/validationDriver/DriverValidationScreen';
 import {DriverExistenceCheckScreen} from 'screens/user/driver/validationDriver/DriverExistenceCheckScreen';
 import {RegisterBusScreen} from 'screens/user/driver/registerBus/RegisterBusScreen';
+import CountDriver from 'components/CountDriver';
 
 const Stack = createNativeStackNavigator();
 
@@ -29,6 +30,19 @@ const renderHeader = (
 );
 
 export const Navigator = () => {
+  const [driverCount, setDriverCount] = useState<number>(0);
+
+  // Función para actualizar el conteo de conductores
+  const updateDriverCount = async () => {
+    const count = await <CountDriver />;
+    setDriverCount(count); // Establece el conteo de conductores
+  };
+
+  // Cargar el número de conductores al inicio
+  useEffect(() => {
+    updateDriverCount();
+  }, []);
+
   return (
     <Stack.Navigator>
       <Stack.Screen
@@ -58,9 +72,8 @@ export const Navigator = () => {
       <Stack.Screen
         name="RegisterDriver"
         component={RegisterScreen}
-        options={({navigation}) => ({
-          header: () =>
-            renderHeader(navigation, 'CONDUCTOR', false, false, 159),
+        options={({ navigation }) => ({
+          header: () => renderHeader(navigation, 'CONDUCTOR', false, false, driverCount),
           headerTransparent: true,
         })}
       />
@@ -69,7 +82,7 @@ export const Navigator = () => {
         component={RegisterBusScreen}
         options={({navigation}) => ({
           header: () =>
-            renderHeader(navigation, 'CONDUCTOR', false, false, 159),
+            renderHeader(navigation, 'CONDUCTOR', false, false, driverCount),
           headerTransparent: true,
         })}
       />
@@ -86,7 +99,7 @@ export const Navigator = () => {
         name="ListBus"
         component={ListBusScreen}
         options={({navigation}) => ({
-          header: () => renderHeader(navigation, 'BUSCAR - TRUFI', false, true),
+          header: () => renderHeader(navigation, 'BUSCAR - TRUFI', false, false),
           headerTransparent: true,
         })}
       />

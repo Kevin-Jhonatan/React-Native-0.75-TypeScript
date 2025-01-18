@@ -3,7 +3,6 @@ import {
   SafeAreaView,
   ScrollView,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import tw from 'twrnc';
@@ -31,16 +30,6 @@ export const RegisterBusScreen = ({navigation}: any) => {
             ]}>
             <RegisterBus navigation={navigation} />
           </View>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('RegisterDriver')}
-            style={[
-              tw`w-[170px] h-[170px] justify-center items-center bg-white`,
-              styles.border,
-            ]}>
-            <Text style={tw`text-lg uppercase font-bold text-black`}>
-              Pasajero
-            </Text>
-          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>

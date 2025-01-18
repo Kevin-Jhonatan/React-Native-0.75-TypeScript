@@ -50,25 +50,23 @@ export const DriverMapScreen = () => {
     }
   };
 
-  // Actualizar ubicación en Firebase
   const updateLocationInDatabase = async (
     latitude: number,
     longitude: number,
   ) => {
     if (!driverPlate) {
-      console.log('Placa no definidos. No se puede actualizar Firebase.');
+      console.log('Placa no definida. No se puede actualizar Firebase.');
       return;
     }
+
     try {
       const locationRef = database().ref(
         `/TRUFI/${driverPlate}/ubicacion_actual`,
       );
 
-      // Escribir datos en Firebase
-      await locationRef.set({latitude, longitude});
-
-      // Configurar onDisconnect
-      locationRef.onDisconnect().remove();
+      // Usar onDisconnect para mantener la última ubicación
+      locationRef.set({latitude, longitude});
+      locationRef.onDisconnect().set({latitude, longitude}); // Mantener ubicación aunque se pierda la conexión
 
       console.log(`Ubicación actualizada para ${driverPlate}:`, {
         latitude,

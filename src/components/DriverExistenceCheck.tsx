@@ -77,7 +77,10 @@ export const DriverExistenceCheck = ({navigation}: any) => {
             await AsyncStorage.getItem('driverPlate'),
           );
 
-          Alert.alert('Validación exitosa', 'Los datos coinciden.');
+          Alert.alert(
+            'Validación exitosa',
+            'Bienvenido señor conductor que tenga un buen día 🚗',
+          );
           navigation.navigate('SendDriverLocationMap');
         }
       }
@@ -100,7 +103,7 @@ export const DriverExistenceCheck = ({navigation}: any) => {
         <InputWithIcon
           value={ci}
           onChangeText={setCI}
-          placeholder="C.I."
+          placeholder="Cedula de identidad"
           inputStyle="uppercase"
           iconComponent={
             <Ci width={25} height={25} style={tw`ml-2`} fill={'black'} />

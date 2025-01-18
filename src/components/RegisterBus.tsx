@@ -1,12 +1,16 @@
 import React, {useState, useEffect} from 'react';
 import tw from 'twrnc';
 import BusBlack from '../assets/icons/home/busBlack.svg';
+import Number from '../assets/icons/home/number.svg';
+import Gps from '../assets/icons/home/gps-black.svg';
+import Ci from '../assets/icons/home/ci.svg';
 import {View, Text, TouchableOpacity, Alert, Switch} from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 import database from '@react-native-firebase/database';
 import styles from '../styles/global.style';
 import InputWithIcon from './Input';
 import MapView, {Marker, PROVIDER_GOOGLE} from 'react-native-maps';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const RegisterBus = ({navigation}: any) => {
   const [number, setNumber] = useState('');
@@ -115,7 +119,8 @@ export const RegisterBus = ({navigation}: any) => {
       };
 
       await database().ref(`/TRUFI/${formattedPlate}`).set(data);
-
+      await AsyncStorage.setItem('driverCI', ci);
+      await AsyncStorage.setItem('driverPlate', formattedPlate);
       Alert.alert('Éxito', 'Trufi registrado correctamente.');
       console.log('Datos guardados:', data);
 
@@ -159,8 +164,11 @@ export const RegisterBus = ({navigation}: any) => {
         <InputWithIcon
           value={ci}
           onChangeText={setCI}
-          placeholder="C.I. del Conductor"
+          placeholder="Cédula de identidad del Conductor"
           inputStyle="uppercase"
+          iconComponent={
+            <Ci width={25} height={25} style={tw`ml-2`} fill={'black'} />
+          }
           autoCapitalize="characters"
           autoCorrect={false}
           maxLength={10}
@@ -173,6 +181,9 @@ export const RegisterBus = ({navigation}: any) => {
           onChangeText={setTrufiNumber}
           placeholder="Número del Trufi"
           inputStyle="uppercase"
+          iconComponent={
+            <Number width={25} height={25} style={tw`ml-2`} fill={'black'} />
+          }
           autoCapitalize="characters"
           autoCorrect={false}
           maxLength={10}
@@ -201,6 +212,7 @@ export const RegisterBus = ({navigation}: any) => {
           onChangeText={setLatitude}
           placeholder="Latitud de la Ubicación"
           inputStyle="uppercase"
+          iconComponent={<Gps width={25} height={25} style={tw`ml-2`} />}
           editable={false}
         />
       </View>
@@ -211,6 +223,7 @@ export const RegisterBus = ({navigation}: any) => {
           onChangeText={setLongitude}
           placeholder="Longitud de la Ubicación"
           inputStyle="uppercase"
+          iconComponent={<Gps width={25} height={25} style={tw`ml-2`} />}
           editable={false}
         />
       </View>
@@ -226,7 +239,7 @@ export const RegisterBus = ({navigation}: any) => {
       </View>
 
       <View style={tw`mt-5 flex-row items-center justify-between`}>
-        <Text style={tw`text-sm text-black`}>Estado del Servicio</Text>
+        <Text style={tw`text-sm text-black`}>Trufi en servicio</Text>
         <Switch
           onValueChange={toggleServiceStatus}
           value={serviceStatus}
