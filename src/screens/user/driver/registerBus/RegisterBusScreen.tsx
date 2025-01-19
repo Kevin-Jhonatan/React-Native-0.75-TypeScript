@@ -1,11 +1,16 @@
 import React from 'react';
-import {SafeAreaView, ScrollView, Text, View} from 'react-native';
+import {
+  SafeAreaView,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 import tw from 'twrnc';
-import Logo from '../../../../assets/icons/home/logo.svg';
 import styles from '../../../../styles/global.style';
-import {RegisterForm} from 'components/RegisterForm';
+import Logo from '../../../../assets/icons/home/logo.svg';
+import RegisterBus from 'components/RegisterBus';
 
-export const RegisterScreen = ({navigation}: any) => {
+export const RegisterBusScreen = ({navigation}: any) => {
   return (
     <SafeAreaView style={tw`flex-1`}>
       <ScrollView contentContainerStyle={tw`flex-grow`}>
@@ -23,7 +28,7 @@ export const RegisterScreen = ({navigation}: any) => {
               tw`flex-1 flex-row justify-center items-center p-8`,
               styles.border,
             ]}>
-            <RegisterForm navigation={navigation} />
+            <RegisterBus navigation={navigation} />
           </View>
         </View>
       </ScrollView>

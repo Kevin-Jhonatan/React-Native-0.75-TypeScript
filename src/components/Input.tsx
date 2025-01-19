@@ -1,8 +1,8 @@
 import React from 'react';
-import {View, TextInput} from 'react-native';
+import {View, TextInput, TextInputProps} from 'react-native';
 import tw from 'twrnc';
 
-interface InputWithIconProps {
+interface InputWithIconProps extends TextInputProps {
   value: string;
   onChangeText: (text: string) => void;
   placeholder?: string;
@@ -11,6 +11,7 @@ interface InputWithIconProps {
   placeholderTextColor?: string;
   containerStyle?: string;
   textColor?: string;
+  inputType?: 'text' | 'number' | 'email' | 'password';
 }
 
 const InputWithIcon: React.FC<InputWithIconProps> = ({
@@ -22,7 +23,23 @@ const InputWithIcon: React.FC<InputWithIconProps> = ({
   placeholderTextColor = 'gray',
   containerStyle = '',
   textColor = 'black',
+  inputType = 'text',
+  autoCapitalize = 'none',
+  autoCorrect = false,
+  maxLength = 255,
+  ...restProps
 }) => {
+  let keyboardType = 'default';
+  let secureTextEntry = false;
+
+  if (inputType === 'number') {
+    keyboardType = 'numeric';
+  } else if (inputType === 'email') {
+    keyboardType = 'email-address';
+  } else if (inputType === 'password') {
+    secureTextEntry = true;
+  }
+
   return (
     <View
       style={tw`flex-row items-center border-b-2 border-black ${containerStyle}`}>
@@ -32,6 +49,12 @@ const InputWithIcon: React.FC<InputWithIconProps> = ({
         value={value}
         placeholder={placeholder}
         placeholderTextColor={placeholderTextColor}
+        keyboardType={keyboardType}
+        secureTextEntry={secureTextEntry}
+        autoCapitalize={autoCapitalize}
+        autoCorrect={autoCorrect}
+        maxLength={maxLength}
+        {...restProps}
       />
       {iconComponent && <View style={tw`ml-2`}>{iconComponent}</View>}
     </View>
