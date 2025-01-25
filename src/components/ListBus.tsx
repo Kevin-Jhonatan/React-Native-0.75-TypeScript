@@ -6,9 +6,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import tw from 'twrnc';
 
 const ListBus = ({navigation, refreshing}: any) => {
-  const [buses, setBuses] = useState<any[]>([]);
+  const [busesIDA, setBusesIDA] = useState<any[]>([]);
+  const [busesVuelta, setBusesVuelta] = useState<any[]>([]);
 
-  // Función para obtener los datos de los buses desde Firebase
   const fetchBuses = async () => {
     try {
       const snapshot = await database()
@@ -26,12 +26,19 @@ const ListBus = ({navigation, refreshing}: any) => {
           placa: busesData[key].placa,
           ubicacion: busesData[key].ubicacion_actual,
           conductorCI: busesData[key].conductor_ci,
-          tiempo: busesData[key].tiempo || 0, // Aseguramos que el campo tiempo tenga un valor por defecto
+          tiempo: busesData[key].tiempo || 0,
+          sentidoRuta: busesData[key].sentido_ruta || '',
         }));
 
-        setBuses(busesList);
+        const idaBuses = busesList.filter(bus => bus.sentidoRuta === 'IDA');
+        const vueltaBuses = busesList.filter(
+          bus => bus.sentidoRuta === 'VUELTA',
+        );
+
+        setBusesIDA(idaBuses);
+        setBusesVuelta(vueltaBuses);
       } else {
-        Alert.alert('Error', 'No se encontraron buses disponibles.');
+        /* Alert.alert('Error', 'No se encontraron buses disponibles.'); */
       }
     } catch (error) {
       console.error('Error al obtener los buses:', error);
@@ -39,7 +46,6 @@ const ListBus = ({navigation, refreshing}: any) => {
     }
   };
 
-  // Función para escuchar cambios en tiempo real
   const listenForBusUpdates = () => {
     const busRef = database()
       .ref('/TRUFI')
@@ -48,44 +54,48 @@ const ListBus = ({navigation, refreshing}: any) => {
 
     busRef.on('child_changed', snapshot => {
       const updatedBus = snapshot.val();
-      setBuses(prevBuses =>
-        prevBuses.map(bus =>
-          bus.id === snapshot.key
-            ? {...bus, tiempo: updatedBus.tiempo || bus.tiempo}
-            : bus,
-        ),
-      );
+
+      if (updatedBus.sentido_ruta === 'IDA') {
+        setBusesIDA(prevBuses =>
+          prevBuses.map(bus =>
+            bus.id === snapshot.key
+              ? {...bus, tiempo: updatedBus.tiempo || bus.tiempo}
+              : bus,
+          ),
+        );
+      } else if (updatedBus.sentido_ruta === 'VUELTA') {
+        setBusesVuelta(prevBuses =>
+          prevBuses.map(bus =>
+            bus.id === snapshot.key
+              ? {...bus, tiempo: updatedBus.tiempo || bus.tiempo}
+              : bus,
+          ),
+        );
+      }
     });
   };
 
-  // Llamar a la función al montar el componente o al refrescar
   useEffect(() => {
     fetchBuses();
-    listenForBusUpdates(); // Escuchar los cambios de los buses
+    listenForBusUpdates();
 
-    // Cleanup listener al desmontar el componente
     return () => {
       const busRef = database().ref('/TRUFI');
       busRef.off('child_changed');
     };
   }, [refreshing]);
 
-  // Función para manejar la selección de un bus
   const handleBusSelection = async (bus: any) => {
     try {
-      // Extraer únicamente la parte posterior a "/CONDUCTOR/"
       const ci = bus.conductorCI.split('/CONDUCTOR/').pop();
 
-      // Guardar los datos en AsyncStorage
       await AsyncStorage.setItem('driverCI', ci || '');
       await AsyncStorage.setItem('driverPlate', bus.id);
 
-      // Mostrar los valores en consola
       console.log('Valores seteados en AsyncStorage:');
       console.log('driverCI:', ci);
       console.log('driverPlate:', bus.id);
 
-      // Navegar al siguiente screen
       navigation.navigate('GetDriverLocationMap', {bus});
     } catch (error) {
       console.error('Error al guardar en AsyncStorage:', error);
@@ -94,21 +104,51 @@ const ListBus = ({navigation, refreshing}: any) => {
   };
 
   return (
-    <View style={tw`mt-4`}>
-      {buses.length > 0 ? (
-        buses.map((bus, index) => (
-          <CardList
-            key={index}
-            lineNumber={bus.numeroTrufi}
-            plate={bus.id}
-            time={parseInt(bus.tiempo, 10) || 0} // Aseguramos que el valor de tiempo sea un número
-            onPress={() => handleBusSelection(bus)}
-          />
-        ))
+    <View style={tw`mt-2`}>
+      {busesIDA.length > 0 ? (
+        <View>
+          <Text style={tw`text-lg font-bold text-white text-center py-2`}>
+            IDA (EL PASO - CBBA)
+          </Text>
+          {busesIDA.map((bus, index) => (
+            <CardList
+              key={index}
+              lineNumber={bus.numeroTrufi}
+              plate={bus.id}
+              time={parseInt(bus.tiempo, 10) || 0}
+              onPress={() => handleBusSelection(bus)}
+            />
+          ))}
+        </View>
       ) : (
-        <Text style={tw`text-center`}>
-          No hay buses disponibles en servicio
+        <Text style={tw`text-center text-white`}>
+          No hay buses de ida en servicio
         </Text>
+      )}
+
+      {busesVuelta.length > 0 ? (
+        <View>
+          <Text style={tw`text-lg font-bold text-white text-center py-2`}>
+            VUELTA (CBBA - EL PASO)
+          </Text>
+          {busesVuelta.map((bus, index) => (
+            <CardList
+              key={index}
+              lineNumber={bus.numeroTrufi}
+              plate={bus.id}
+              time={parseInt(bus.tiempo, 10) || 0}
+              onPress={() => handleBusSelection(bus)}
+            />
+          ))}
+        </View>
+      ) : (
+        <Text style={tw`text-center text-white`}>
+          No hay buses de vuelta en servicio
+        </Text>
+      )}
+
+      {busesIDA.length === 0 && busesVuelta.length === 0 && (
+        <Text style={tw`text-center text-white`}>No hay buses en servicio</Text>
       )}
     </View>
   );

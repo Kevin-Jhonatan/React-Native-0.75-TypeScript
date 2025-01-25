@@ -9,6 +9,7 @@ import {
 import tw from 'twrnc';
 import styles from '../../../styles/global.style';
 import ListBus from 'components/ListBus';
+import Down from 'assets/icons/home/down.svg';
 
 export const ListBusScreen = ({navigation}: any) => {
   const [refreshing, setRefreshing] = useState(false);
@@ -35,11 +36,11 @@ export const ListBusScreen = ({navigation}: any) => {
         }>
         <View style={[tw`mt-15 p-6`]}>
           <Text
-            style={[
-              tw`text-lg font-bold text-center mb-4 uppercase text-white`,
-            ]}>
+            style={[tw`text-lg font-bold text-center uppercase text-white`]}>
             Deslice abajo para actualizar los trufis disponibles.
           </Text>
+          <Down width={30} height={30} style={tw`m-auto`} fill={'white'} />
+
           <ListBus navigation={navigation} refreshing={refreshing} />
         </View>
       </ScrollView>
