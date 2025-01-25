@@ -21,7 +21,6 @@ const CustomFooter = ({
 }) => {
   const [isEnabled, setIsEnabled] = useState(false);
 
-  // Recuperar el estado del servicio desde Firebase
   useEffect(() => {
     const fetchServiceStatus = async () => {
       if (!plate) {
@@ -42,7 +41,6 @@ const CustomFooter = ({
     fetchServiceStatus();
   }, [plate]);
 
-  // Guardar el estado del servicio en Firebase
   const updateServiceStatus = async (status: boolean) => {
     if (!plate) {
       return;
@@ -60,7 +58,7 @@ const CustomFooter = ({
   const toggleSwitch = () => {
     const newStatus = !isEnabled;
     setIsEnabled(newStatus);
-    updateServiceStatus(newStatus); // Guardar el nuevo estado en Firebase
+    updateServiceStatus(newStatus);
   };
 
   const formatTime = (seconds: number) => {

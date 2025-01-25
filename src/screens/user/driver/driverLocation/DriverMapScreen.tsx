@@ -327,7 +327,7 @@ export const DriverMapScreen = () => {
                 latitude: location.latitude,
                 longitude: location.longitude,
               }}
-              destination={isEnabled ? origin : destination}
+              destination={isEnabled ? destination : origin}
               apikey={GOOGLE_MAPS_APIKEY}
               strokeWidth={4}
               strokeColor="transparent"

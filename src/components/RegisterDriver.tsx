@@ -13,7 +13,7 @@ export const RegisterDriver = ({navigation}: any) => {
   const [name, setName] = React.useState('');
   const [lastName, setLastName] = React.useState('');
   const [ci, setCI] = React.useState('');
-  const [loading, setLoading] = React.useState(false); // Estado para el loader
+  const [loading, setLoading] = React.useState(false);
 
   const saveDrive = async () => {
     if (!name || !lastName || !ci) {
@@ -21,17 +21,15 @@ export const RegisterDriver = ({navigation}: any) => {
       return;
     }
 
-    setLoading(true); // Mostrar loader
+    setLoading(true);
 
     try {
-      // Verificar si el CI ya existe en la base de datos
       const snapshot = await database().ref(`/CONDUCTOR/${ci}`).once('value');
       if (snapshot.exists()) {
         Alert.alert('Error', 'El número de C.I. ya está registrado.');
         return;
       }
 
-      // Si no existe, guardar los datos en Realtime Database usando el CI como clave única
       console.log('Datos a guardar en Firebase:', {
         nombre: name,
         apellido: lastName,
@@ -47,7 +45,6 @@ export const RegisterDriver = ({navigation}: any) => {
       Alert.alert('Éxito', 'Conductor registrado correctamente.');
       console.log('Datos guardados en Firebase:', {email, name, lastName});
 
-      // Limpia los campos después de registrar
       setName('');
       setLastName('');
       setEmail('');
@@ -58,7 +55,7 @@ export const RegisterDriver = ({navigation}: any) => {
       console.error('Error al guardar los datos:', error);
       Alert.alert('Error', 'No se pudo registrar el conductor.');
     } finally {
-      setLoading(false); // Ocultar loader
+      setLoading(false);
     }
   };
 

@@ -362,7 +362,6 @@ export const PassengerMapScreen = () => {
           />
         </MapView>
 
-        {/* Mostrar notificación de cambio de ruta */}
         {changeRoute && (
           <View
             style={tw`absolute top-20 left-0 right-0 flex justify-center items-center`}>
@@ -375,7 +374,7 @@ export const PassengerMapScreen = () => {
             </View>
           </View>
         )}
-        {/* Mostrar notificación de cambio de servicio */}
+
         {!isServiceActive && (
           <View
             style={tw`absolute top-43 left-0 right-0 flex justify-center items-center`}>

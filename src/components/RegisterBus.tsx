@@ -24,7 +24,13 @@ export const RegisterBus = ({navigation}: any) => {
     latitude: -17.338151,
     longitude: -66.265726,
   });
-  const [loading, setLoading] = useState(false); // Estado para el loader
+  const [loading, setLoading] = useState(false);
+
+  const handleTrufiNumberChange = (text: string) => {
+    if (/^\d*$/.test(text)) {
+      setTrufiNumber(text);
+    }
+  };
 
   useEffect(() => {
     Geolocation.getCurrentPosition(
@@ -74,7 +80,7 @@ export const RegisterBus = ({navigation}: any) => {
       return;
     }
 
-    setLoading(true); // Mostrar loader
+    setLoading(true);
 
     try {
       const formattedPlate = number.toUpperCase();
@@ -137,7 +143,7 @@ export const RegisterBus = ({navigation}: any) => {
       console.error('Error al guardar los datos:', error);
       Alert.alert('Error', 'No se pudo registrar el trufi.');
     } finally {
-      setLoading(false); // Ocultar loader
+      setLoading(false);
     }
   };
 
@@ -178,7 +184,7 @@ export const RegisterBus = ({navigation}: any) => {
       <View style={tw`flex-row items-center`}>
         <InputWithIcon
           value={trufiNumber}
-          onChangeText={setTrufiNumber}
+          onChangeText={handleTrufiNumberChange}
           placeholder="Número del Trufi"
           inputStyle="uppercase"
           iconComponent={
@@ -187,6 +193,7 @@ export const RegisterBus = ({navigation}: any) => {
           autoCapitalize="characters"
           autoCorrect={false}
           maxLength={10}
+          inputType="number"
         />
       </View>
 

@@ -32,13 +32,11 @@ const renderHeader = (
 export const Navigator = () => {
   const [driverCount, setDriverCount] = useState<number>(0);
 
-  // Función para actualizar el conteo de conductores
   const updateDriverCount = async () => {
     const count = await (<CountDriver />);
-    setDriverCount(count); // Establece el conteo de conductores
+    setDriverCount(count);
   };
 
-  // Cargar el número de conductores al inicio
   useEffect(() => {
     updateDriverCount();
   }, []);

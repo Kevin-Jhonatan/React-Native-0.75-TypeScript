@@ -24,13 +24,11 @@ const CustomHeader = ({
   const [isEnabled, setIsEnabled] = useState(false);
   const [notifyEnabled, setNotifyEnabled] = useState(false);
 
-  // Función para obtener la placa desde AsyncStorage
   const getPlateFromAsyncStorage = async () => {
     const plate = await AsyncStorage.getItem('driverPlate');
     return plate;
   };
 
-  // Cargar el estado de cambio_ruta al inicio
   useEffect(() => {
     const loadRouteChangeState = async () => {
       const plate = await getPlateFromAsyncStorage();
@@ -38,7 +36,7 @@ const CustomHeader = ({
         const trufiRef = database().ref(`/TRUFI/${plate}/cambio_ruta`);
         trufiRef.once('value', snapshot => {
           const changeRoute = snapshot.val();
-          setIsEnabled(changeRoute || false); // Establece el valor inicial del toggle
+          setIsEnabled(changeRoute || false);
         });
       }
     };
@@ -46,7 +44,6 @@ const CustomHeader = ({
     loadRouteChangeState();
   }, []);
 
-  // Función para actualizar el valor de cambio_ruta en Firebase
   const updateRouteChangeInDatabase = async (newState: boolean) => {
     const plate = await getPlateFromAsyncStorage();
     if (plate) {
@@ -58,13 +55,11 @@ const CustomHeader = ({
     }
   };
 
-  // Manejo del toggle de cambio de ruta
   const toggleSwitch = async () => {
     const newState = !isEnabled;
-    setIsEnabled(newState); // Cambia el estado local
+    setIsEnabled(newState);
     console.log(`Toggle está: ${newState ? 'on' : 'off'}`);
 
-    // Actualiza el valor de cambio_ruta en Firebase
     await updateRouteChangeInDatabase(newState);
   };
 

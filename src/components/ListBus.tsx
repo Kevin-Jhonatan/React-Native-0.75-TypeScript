@@ -108,7 +108,7 @@ const ListBus = ({navigation, refreshing}: any) => {
       {busesIDA.length > 0 ? (
         <View>
           <Text style={tw`text-lg font-bold text-white text-center py-2`}>
-            IDA (EL PASO - CBBA)
+            IDA (PASO - CBBA)
           </Text>
           {busesIDA.map((bus, index) => (
             <CardList
@@ -129,7 +129,7 @@ const ListBus = ({navigation, refreshing}: any) => {
       {busesVuelta.length > 0 ? (
         <View>
           <Text style={tw`text-lg font-bold text-white text-center py-2`}>
-            VUELTA (CBBA - EL PASO)
+            VUELTA (CBBA - PASO)
           </Text>
           {busesVuelta.map((bus, index) => (
             <CardList

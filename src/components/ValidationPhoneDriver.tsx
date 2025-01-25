@@ -8,11 +8,11 @@ import PhoneBlack from '../assets/icons/home/phone-black.svg';
 import CodeIcon from '../assets/icons/home/message-black.svg';
 
 const ValidationPhoneDriver = ({navigation}: any) => {
-  const [phoneNumber, setPhoneNumber] = useState('+591'); // Número de teléfono inicial con código de país
-  const [confirm, setConfirm] = useState(null); // Almacena la confirmación del OTP
-  const [code, setCode] = useState(''); // Código OTP ingresado por el usuario
-  const [loading, setLoading] = useState(false); // Estado para el loader
-  const [confirming, setConfirming] = useState(false); // Estado para confirmar el código
+  const [phoneNumber, setPhoneNumber] = useState('+591');
+  const [confirm, setConfirm] = useState(null);
+  const [code, setCode] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [confirming, setConfirming] = useState(false);
 
   useEffect(() => {
     const subscriber = auth().onAuthStateChanged(user => {
@@ -22,12 +22,11 @@ const ValidationPhoneDriver = ({navigation}: any) => {
           'Autenticación exitosa',
           'Validación de socio correctamente.',
         );
-        // Redirigir después de autenticación exitosa
         navigation.navigate('RegisterDriver');
       }
     });
 
-    return subscriber; // Desuscribirse al desmontar
+    return subscriber;
   }, [navigation]);
 
   const signInWithPhoneNumber = async (phoneNumber: string) => {
@@ -36,7 +35,7 @@ const ValidationPhoneDriver = ({navigation}: any) => {
       return;
     }
 
-    setLoading(true); // Activar el loader
+    setLoading(true);
     try {
       console.log('Enviando código al número:', phoneNumber);
       const confirmation = await auth().signInWithPhoneNumber(phoneNumber);
@@ -52,7 +51,7 @@ const ValidationPhoneDriver = ({navigation}: any) => {
         'No se pudo enviar el código. Verifica el número e inténtalo nuevamente.',
       );
     } finally {
-      setLoading(false); // Desactivar el loader
+      setLoading(false);
     }
   };
 
@@ -67,18 +66,17 @@ const ValidationPhoneDriver = ({navigation}: any) => {
       return;
     }
 
-    setConfirming(true); // Activar el estado de confirmación
+    setConfirming(true);
     try {
       console.log('Confirmando código:', code);
       await confirm.confirm(code);
       console.log('Código confirmado correctamente.');
-      // Redirigir a RegisterDriver una vez confirmado el código
       navigation.navigate('RegisterDriver');
     } catch (error) {
       console.error('Error al confirmar el código:', error);
       Alert.alert('Error', 'El código ingresado no es válido.');
     } finally {
-      setConfirming(false); // Desactivar el estado de confirmación
+      setConfirming(false);
     }
   };
 

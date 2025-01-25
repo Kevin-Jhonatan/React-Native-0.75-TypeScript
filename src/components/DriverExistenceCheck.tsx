@@ -27,10 +27,8 @@ export const DriverExistenceCheck = ({navigation}: any) => {
     setLoading(true);
 
     try {
-      // Convertir placa a mayúsculas para asegurar consistencia
       const normalizedPlate = plate.toUpperCase();
 
-      // Verificar si el registro de TRUFI existe
       const plateSnapshot = await database()
         .ref(`/TRUFI/${normalizedPlate}`)
         .once('value');
@@ -51,8 +49,7 @@ export const DriverExistenceCheck = ({navigation}: any) => {
           return;
         }
 
-        // Extraer el C.I. del path
-        const expectedCI = conductorCIPath.split('/').pop(); // Obtiene "1234567899" de "/CONDUCTOR/1234567899"
+        const expectedCI = conductorCIPath.split('/').pop();
 
         if (ci !== expectedCI) {
           console.error(
@@ -67,7 +64,6 @@ export const DriverExistenceCheck = ({navigation}: any) => {
             `Validación exitosa para C.I.=${ci} y Placa=${normalizedPlate}`,
           );
 
-          // Guardar C.I. y placa en AsyncStorage
           await AsyncStorage.setItem('driverCI', ci);
           await AsyncStorage.setItem('driverPlate', normalizedPlate);
 
@@ -118,7 +114,7 @@ export const DriverExistenceCheck = ({navigation}: any) => {
       <View style={tw`flex-row items-center mt-4`}>
         <InputWithIcon
           value={plate}
-          onChangeText={text => setPlate(text.toUpperCase())} // Convertir a mayúsculas automáticamente
+          onChangeText={text => setPlate(text.toUpperCase())}
           placeholder="Placa"
           inputStyle="uppercase"
           iconComponent={
