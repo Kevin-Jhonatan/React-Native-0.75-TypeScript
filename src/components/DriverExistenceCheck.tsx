@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import tw from 'twrnc';
 import Ci from '../assets/icons/home/ci.svg';
 import Plate from '../assets/icons/home/bus.svg';
@@ -12,6 +12,21 @@ export const DriverExistenceCheck = ({navigation}: any) => {
   const [ci, setCI] = React.useState('');
   const [plate, setPlate] = React.useState('');
   const [loading, setLoading] = React.useState(false);
+
+  useEffect(() => {
+    const checkStoredData = async () => {
+      const storedCI = await AsyncStorage.getItem('driverCI');
+      const storedPlate = await AsyncStorage.getItem('driverPlate');
+
+      if (storedCI && storedPlate) {
+        setCI(storedCI);
+        setPlate(storedPlate);
+        validateDriver(storedCI, storedPlate);
+      }
+    };
+
+    checkStoredData();
+  }, []);
 
   const checkDriverExistence = async () => {
     if (!ci || !plate) {
@@ -88,6 +103,57 @@ export const DriverExistenceCheck = ({navigation}: any) => {
     }
   };
 
+  const validateDriver = async (storedCI: string, storedPlate: string) => {
+    const normalizedPlate = storedPlate.toUpperCase();
+
+    try {
+      const plateSnapshot = await database()
+        .ref(`/TRUFI/${normalizedPlate}`)
+        .once('value');
+
+      if (!plateSnapshot.exists()) {
+        console.error(`La placa ${normalizedPlate} no fue encontrada.`);
+        Alert.alert('Error', 'No se ha encontrado un registro con esa placa.');
+      } else {
+        const trufiData = plateSnapshot.val();
+        const conductorCIPath = trufiData.conductor_ci;
+
+        if (!conductorCIPath) {
+          console.error('El campo "conductor_ci" no está definido en TRUFI.');
+          Alert.alert(
+            'Error',
+            'No se encontró un conductor asociado a esta placa.',
+          );
+          return;
+        }
+
+        const expectedCI = conductorCIPath.split('/').pop();
+
+        if (storedCI !== expectedCI) {
+          console.error(
+            `El C.I. almacenado (${storedCI}) no coincide con el registrado (${expectedCI}).`,
+          );
+          Alert.alert(
+            'Error',
+            'El C.I. almacenado no coincide con el registrado para esta placa.',
+          );
+        } else {
+          console.log(
+            `Validación exitosa para C.I.=${storedCI} y Placa=${normalizedPlate}`,
+          );
+
+          navigation.navigate('SendDriverLocationMap');
+        }
+      }
+    } catch (error) {
+      console.error('Error al verificar los datos almacenados:', error);
+      Alert.alert(
+        'Error',
+        'Hubo un problema al verificar los datos almacenados.',
+      );
+    }
+  };
+
   return (
     <View style={[tw`bg-white flex-1 justify-center p-8`, styles.border]}>
       <Text style={tw`font-bold text-lg text-center uppercase text-black`}>
@@ -99,7 +165,7 @@ export const DriverExistenceCheck = ({navigation}: any) => {
         <InputWithIcon
           value={ci}
           onChangeText={setCI}
-          placeholder="Cedula de identidad"
+          placeholder="CÉDULA DE IDENTIDAD"
           inputStyle="uppercase"
           iconComponent={
             <Ci width={25} height={25} style={tw`ml-2`} fill={'black'} />
@@ -107,6 +173,7 @@ export const DriverExistenceCheck = ({navigation}: any) => {
           autoCapitalize="characters"
           autoCorrect={false}
           maxLength={10}
+          required={true}
         />
       </View>
 
@@ -115,7 +182,7 @@ export const DriverExistenceCheck = ({navigation}: any) => {
         <InputWithIcon
           value={plate}
           onChangeText={text => setPlate(text.toUpperCase())}
-          placeholder="Placa"
+          placeholder="PLACA"
           inputStyle="uppercase"
           iconComponent={
             <Plate width={25} height={25} style={tw`ml-2`} fill={'black'} />
@@ -123,6 +190,7 @@ export const DriverExistenceCheck = ({navigation}: any) => {
           autoCapitalize="characters"
           autoCorrect={false}
           maxLength={10}
+          required={true}
         />
       </View>
 

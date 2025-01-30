@@ -69,7 +69,7 @@ export const RegisterDriver = ({navigation}: any) => {
         <InputWithIcon
           value={ci}
           onChangeText={setCI}
-          placeholder="Cédula de identidad"
+          placeholder="CÉDULA DE IDENTIDAD"
           inputStyle="uppercase"
           iconComponent={
             <Ci width={25} height={25} style={tw`ml-2`} fill={'black'} />
@@ -77,6 +77,7 @@ export const RegisterDriver = ({navigation}: any) => {
           autoCapitalize="characters"
           autoCorrect={false}
           maxLength={10}
+          required={true}
         />
       </View>
 
@@ -92,6 +93,7 @@ export const RegisterDriver = ({navigation}: any) => {
           autoCapitalize="characters"
           autoCorrect={false}
           maxLength={25}
+          required={true}
         />
       </View>
 
@@ -107,6 +109,7 @@ export const RegisterDriver = ({navigation}: any) => {
           autoCapitalize="characters"
           autoCorrect={false}
           maxLength={25}
+          required={true}
         />
       </View>
 

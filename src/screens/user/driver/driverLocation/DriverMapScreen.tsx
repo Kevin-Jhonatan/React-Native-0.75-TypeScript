@@ -20,8 +20,9 @@ import Location from 'assets/icons/home/location.svg';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import database from '@react-native-firebase/database';
 import MapViewDirections from 'react-native-maps-directions';
+import Logout from 'assets/icons/home/logout.svg';
 
-export const DriverMapScreen = () => {
+export const DriverMapScreen = ({navigation}: any) => {
   const mapRef = useRef(null);
   const [location, setLocation] = useState({
     latitude: -17.338151,
@@ -86,7 +87,7 @@ export const DriverMapScreen = () => {
       const trufiRef = database().ref(`/TRUFI/${driverPlate}`);
       trufiRef
         .update({
-          tiempo: timeInSeconds, // Actualizar el campo "tiempo"
+          tiempo: timeInSeconds,
         })
         .then(() => {
           console.log('Tiempo actualizado en Firebase');
@@ -259,15 +260,26 @@ export const DriverMapScreen = () => {
     trufiRef.once('value', snapshot => {
       if (!snapshot.exists() || !snapshot.child('sentido_ruta').exists()) {
         trufiRef.update({
-          sentido_ruta: 'IDA', // Solo actualiza este campo
+          sentido_ruta: 'IDA',
         });
-        setIsEnabled(false); // Configurar estado local como IDA
+        setIsEnabled(false);
         console.log('Campo sentido_ruta inicializado con IDA');
       } else {
         const sentidoRuta = snapshot.child('sentido_ruta').val();
-        setIsEnabled(sentidoRuta === 'VUELTA'); // Ajustar el estado local según el valor en la base de datos
+        setIsEnabled(sentidoRuta === 'VUELTA');
       }
     });
+  };
+
+  const logout = async () => {
+    try {
+      await AsyncStorage.removeItem('driverCI');
+      await AsyncStorage.removeItem('driverPlate');
+      console.log('Sesión cerrada y datos eliminados');
+      navigation.navigate('Home');
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+    }
   };
 
   useEffect(() => {
@@ -360,6 +372,14 @@ export const DriverMapScreen = () => {
             description="El tiempo de llegada a esta parada debe ser de 40 MIN"
           />
         </MapView>
+
+        <TouchableOpacity
+          style={[
+            tw`absolute top-20 right-3 bg-[#222936] bg-opacity-50 p-3 rounded-full`,
+          ]}
+          onPress={logout}>
+          <Logout width={30} height={30} fill={'white'} />
+        </TouchableOpacity>
 
         <TouchableOpacity
           style={[

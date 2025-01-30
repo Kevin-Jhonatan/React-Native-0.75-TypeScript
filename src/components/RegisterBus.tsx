@@ -157,12 +157,13 @@ export const RegisterBus = ({navigation}: any) => {
         <InputWithIcon
           value={number}
           onChangeText={setNumber}
-          placeholder="Placa del Trufi"
+          placeholder="PLACA DE TRUFI"
           inputStyle="uppercase"
           iconComponent={<BusBlack width={25} height={25} style={tw`ml-2`} />}
           autoCapitalize="characters"
           autoCorrect={false}
           maxLength={10}
+          required={true}
         />
       </View>
 
@@ -170,7 +171,7 @@ export const RegisterBus = ({navigation}: any) => {
         <InputWithIcon
           value={ci}
           onChangeText={setCI}
-          placeholder="Cédula de identidad del Conductor"
+          placeholder="CÉDULA DE IDENTIDAD"
           inputStyle="uppercase"
           iconComponent={
             <Ci width={25} height={25} style={tw`ml-2`} fill={'black'} />
@@ -178,6 +179,7 @@ export const RegisterBus = ({navigation}: any) => {
           autoCapitalize="characters"
           autoCorrect={false}
           maxLength={10}
+          required={true}
         />
       </View>
 
@@ -185,7 +187,7 @@ export const RegisterBus = ({navigation}: any) => {
         <InputWithIcon
           value={trufiNumber}
           onChangeText={handleTrufiNumberChange}
-          placeholder="Número del Trufi"
+          placeholder="NÚMERO DE TRUFI"
           inputStyle="uppercase"
           iconComponent={
             <Number width={25} height={25} style={tw`ml-2`} fill={'black'} />
@@ -194,6 +196,7 @@ export const RegisterBus = ({navigation}: any) => {
           autoCorrect={false}
           maxLength={10}
           inputType="number"
+          required={true}
         />
       </View>
 
@@ -217,7 +220,7 @@ export const RegisterBus = ({navigation}: any) => {
         <InputWithIcon
           value={latitude}
           onChangeText={setLatitude}
-          placeholder="Latitud de la Ubicación"
+          placeholder="LATITUD DE UBICACIÓN"
           inputStyle="uppercase"
           iconComponent={<Gps width={25} height={25} style={tw`ml-2`} />}
           editable={false}
@@ -228,7 +231,7 @@ export const RegisterBus = ({navigation}: any) => {
         <InputWithIcon
           value={longitude}
           onChangeText={setLongitude}
-          placeholder="Longitud de la Ubicación"
+          placeholder="LONGITUD DE UBICACIÓN"
           inputStyle="uppercase"
           iconComponent={<Gps width={25} height={25} style={tw`ml-2`} />}
           editable={false}
@@ -236,7 +239,7 @@ export const RegisterBus = ({navigation}: any) => {
       </View>
 
       <View style={tw`mt-5 flex-row items-center justify-between`}>
-        <Text style={tw`text-sm text-black`}>Cambio de Ruta</Text>
+        <Text style={tw`text-sm text-black`}>CAMBIO DE RUTA</Text>
         <Switch
           onValueChange={toggleRouteChange}
           value={routeChange}
@@ -246,7 +249,7 @@ export const RegisterBus = ({navigation}: any) => {
       </View>
 
       <View style={tw`mt-5 flex-row items-center justify-between`}>
-        <Text style={tw`text-sm text-black`}>Trufi en servicio</Text>
+        <Text style={tw`text-sm text-black`}>TRUFI EN SERVICIO</Text>
         <Switch
           onValueChange={toggleServiceStatus}
           value={serviceStatus}

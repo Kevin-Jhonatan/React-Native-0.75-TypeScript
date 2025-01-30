@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, TextInput, TextInputProps} from 'react-native';
+import {View, TextInput, TextInputProps, Text} from 'react-native';
 import tw from 'twrnc';
 
 interface InputWithIconProps extends TextInputProps {
@@ -12,6 +12,7 @@ interface InputWithIconProps extends TextInputProps {
   containerStyle?: string;
   textColor?: string;
   inputType?: 'text' | 'number' | 'email' | 'password';
+  required?: boolean;
 }
 
 const InputWithIcon: React.FC<InputWithIconProps> = ({
@@ -24,6 +25,7 @@ const InputWithIcon: React.FC<InputWithIconProps> = ({
   containerStyle = '',
   textColor = 'black',
   inputType = 'text',
+  required = false,
   autoCapitalize = 'none',
   autoCorrect = false,
   maxLength = 255,
@@ -43,6 +45,7 @@ const InputWithIcon: React.FC<InputWithIconProps> = ({
   return (
     <View
       style={tw`flex-row items-center border-b-2 border-black ${containerStyle}`}>
+      {required && <Text style={tw`text-red-500 text-lg font-bold`}>*</Text>}
       <TextInput
         style={[tw`flex-1 py-2 text-left ${inputStyle}`, {color: textColor}]}
         onChangeText={onChangeText}
@@ -56,7 +59,8 @@ const InputWithIcon: React.FC<InputWithIconProps> = ({
         maxLength={maxLength}
         {...restProps}
       />
-      {iconComponent && <View style={tw`ml-2`}>{iconComponent}</View>}
+
+      {iconComponent && <View style={tw``}>{iconComponent}</View>}
     </View>
   );
 };

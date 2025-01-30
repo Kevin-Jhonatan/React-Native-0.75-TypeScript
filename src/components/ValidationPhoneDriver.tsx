@@ -102,17 +102,19 @@ const ValidationPhoneDriver = ({navigation}: any) => {
           autoCapitalize="characters"
           autoCorrect={false}
           maxLength={12}
+          required={true}
         />
       ) : (
         <InputWithIcon
           value={code}
           onChangeText={setCode}
-          placeholder="Código SMS"
+          placeholder="CÓDIGO DE SMS"
           keyboardType="number-pad"
           iconComponent={<CodeIcon width={25} height={25} style={tw`ml-2`} />}
           inputType="number"
           autoCapitalize="characters"
           maxLength={6}
+          required={true}
         />
       )}
 
